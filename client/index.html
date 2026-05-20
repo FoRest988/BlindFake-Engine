@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlindFake: Phantom</title>
+  <link rel="stylesheet" href="src/styles/main.css" />
+  <link rel="stylesheet" href="src/styles/editor.css" />
+  <link rel="stylesheet" href="src/styles/landing.css" />
+</head>
+<body>
+  <div id="landing-page"></div>
+  <div id="game-container" class="hidden">
+    <canvas id="game-canvas" tabindex="0"></canvas>
+    <div id="ui-overlay"></div>
+    <div id="cinematic-overlay" class="hidden">
+      <div class="letterbox top"></div>
+      <div class="subtitle-container">
+        <p id="subtitle-text"></p>
+      </div>
+      <div class="letterbox bottom"></div>
+    </div>
+  </div>
+  <div id="editor-root" class="hidden"></div>
+  <script type="module" src="src/main.ts"></script>
+</body>
+</html>
