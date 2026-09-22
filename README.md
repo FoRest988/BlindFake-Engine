@@ -1,10 +1,10 @@
 # BlindFake: Phantom
 
-> **Phantom Edition — v0.2.0**
+> **Phantom Edition - v0.2.0**
 
-A full-featured 3D/2D web game engine with a Unity/Unreal-style editor, ECS architecture, visual scripting, terrain editing, cinematics, particle systems, AI, physics, and multiplayer — all running in the browser.
+A full-featured 3D/2D web game engine with a Unity/Unreal-style editor, ECS architecture, visual scripting, terrain editing, cinematics, particle systems, AI, physics, and multiplayer - all running in the browser.
 
-> **Status:** Private repository — heading toward public Beta release.
+> **Status:** Private repository - heading toward public Beta release.
 
 ---
 
@@ -31,19 +31,19 @@ A full-featured 3D/2D web game engine with a Unity/Unreal-style editor, ECS arch
 | 19 | **Testing & Stability**: 345 tests, BenchmarkRunner utility, performance budgets |
 | 20 | **Website, Docs & Community Launch** |
 
-### Phase 17 — UI System
+### Phase 17 - UI System
 
-`client/src/engine/UISystem.ts` — Canvas-overlay 2D UI with full widget set:
+`client/src/engine/UISystem.ts` - Canvas-overlay 2D UI with full widget set:
 - Widgets: `UIPanel`, `UILabel`, `UIButton`, `UIProgressBar`, `UISlider`, `UIToggle`, `UIImage`, `UIScrollView`
 - `UICanvas` root container with pointer input routing, z-ordering, `getWidgets()`
 - 9 anchor presets (`top-left` → `stretch-full`) for responsive layouts
-- Themeable via `UITheme` / `DEFAULT_THEME` — colors, fonts, border radius, padding
+- Themeable via `UITheme` / `DEFAULT_THEME` - colors, fonts, border radius, padding
 - `WorldSpaceUI` interface for billboard UI on 3D objects
 
-### Phase 18 — Mobile & PWA
+### Phase 18 - Mobile & PWA
 
 `client/src/engine/TouchInputManager.ts`:
-- Unified Pointer Events API — works on touch and mouse/pen
+- Unified Pointer Events API - works on touch and mouse/pen
 - Gestures: `tap`, `doubletap`, `longpress`, `swipe`, `pinch`, `pan`, `pointerraw`
 - Up to 10 simultaneous pointers, configurable thresholds via `TouchManagerConfig`
 
@@ -53,14 +53,14 @@ A full-featured 3D/2D web game engine with a Unity/Unreal-style editor, ECS arch
 - `DualJoystickController` for left/right split-screen on mobile
 - `render(ctx)` method for Canvas-overlay drawing
 
-### Phase 19 — Testing & Stability
+### Phase 19 - Testing & Stability
 
 `client/src/engine/Benchmark.ts`:
-- `BenchmarkRunner` — suites with warmup, statistical reporting (min/max/mean/median/p95/stddev/opsPerSec)
-- `time(label, fn)` — single-shot timing helper
-- `assertUnder(budgetMs, fn)` — performance budget assertion (throws on regression)
+- `BenchmarkRunner` - suites with warmup, statistical reporting (min/max/mean/median/p95/stddev/opsPerSec)
+- `time(label, fn)` - single-shot timing helper
+- `assertUnder(budgetMs, fn)` - performance budget assertion (throws on regression)
 
-**Test suite**: 345 tests across 36 files — all green, zero TypeScript errors.
+**Test suite**: 345 tests across 36 files - all green, zero TypeScript errors.
 
 ---
 
@@ -127,7 +127,7 @@ The editor is a complete development environment with multiple tabs and floating
 | **Hierarchy** | Scene tree with select, rename, drag-reorder, search |
 | **Inspector** | Transform, material, light, shadows, ECS components, physics, scripts |
 | **Timeline** | Keyframe animation editor |
-| **Console** | Logs, warnings, errors — filterable |
+| **Console** | Logs, warnings, errors - filterable |
 | **Asset Browser** | Grid/list view, drag-and-drop to viewport, import .glb/.gltf with textures |
 | **Material Editor** | PBR properties, live preview sphere, texture slots |
 | **Engine Systems** | Weather, post-processing, particles, audio, splines, plugins config |
@@ -137,7 +137,7 @@ The editor is a complete development environment with multiple tabs and floating
 - Real-time 3D preview with orbit camera
 - **Brushes:** Raise, Lower, Smooth, Flatten, Paint
 - 4 texture layers with splatmap blending (GLSL shader)
-- Multi-tile terrain grid system — add tiles in any direction
+- Multi-tile terrain grid system - add tiles in any direction
 - Import/export heightmaps (PNG grayscale)
 - Apply to Scene with progress bar (batched processing)
 - Collision mesh generation
@@ -167,16 +167,16 @@ The editor is a complete development environment with multiple tabs and floating
 
 ### Editor Features
 
-- **Play/Stop/Pause** — test your game in the viewport (physics, player controls, game systems)
-- **Undo/Redo** — full history for transforms, properties, materials, add/remove
-- **Multi-Select** — Shift+click, Ctrl+A, selection badges with batch operations
-- **Autosave** — configurable interval to localStorage
-- **Drag-Drop Assets** — drag models from Asset Browser to viewport with raycast placement
-- **Layout Presets** — Default, Wide, Animation, Scripting, Compact + custom layouts
-- **Custom Keybinds** — editable keyboard shortcuts
-- **Scene Versioning** — version history with restore
-- **Preferences** — snap, grid, camera speed, 25+ CSS theme variables
-- **Export to HTML** — one-click standalone game export with loading screen, FPS controls
+- **Play/Stop/Pause** - test your game in the viewport (physics, player controls, game systems)
+- **Undo/Redo** - full history for transforms, properties, materials, add/remove
+- **Multi-Select** - Shift+click, Ctrl+A, selection badges with batch operations
+- **Autosave** - configurable interval to localStorage
+- **Drag-Drop Assets** - drag models from Asset Browser to viewport with raycast placement
+- **Layout Presets** - Default, Wide, Animation, Scripting, Compact + custom layouts
+- **Custom Keybinds** - editable keyboard shortcuts
+- **Scene Versioning** - version history with restore
+- **Preferences** - snap, grid, camera speed, 25+ CSS theme variables
+- **Export to HTML** - one-click standalone game export with loading screen, FPS controls
 
 ### Keyboard Shortcuts
 
@@ -239,7 +239,7 @@ The editor is a complete development environment with multiple tabs and floating
 | Feature | Description |
 |---------|-------------|
 | **Heightmap terrain** | Custom GLSL shader with 4-layer splatmap blending |
-| **Brush editing** | Raise, Lower, Smooth, Flatten, Paint — all real-time |
+| **Brush editing** | Raise, Lower, Smooth, Flatten, Paint - all real-time |
 | **Multi-tile grid** | Seamless tile system, add tiles in any direction |
 | **Import/Export** | PNG grayscale heightmaps |
 | **Collision mesh** | Auto-generated for physics |
@@ -260,7 +260,7 @@ The editor is a complete development environment with multiple tabs and floating
 
 | Feature | Description |
 |---------|-------------|
-| **Audio Manager** | Groups: SFX, Music, Ambient, UI, Voice — independent volume |
+| **Audio Manager** | Groups: SFX, Music, Ambient, UI, Voice - independent volume |
 | **3D Spatial Sound** | PannerNode with distance attenuation |
 | **Playlist** | Shuffle, crossfade, queue |
 | **Audio Effects** | Reverb, delay, EQ chain, snapshot system |
@@ -314,7 +314,7 @@ The editor is a complete development environment with multiple tabs and floating
 | Feature | Description |
 |---------|-------------|
 | **Spline Path System** | CatmullRom paths for movement, camera rails, collision walls |
-| **Visual Drawing** | Click-to-place drawing mode — left-click places points, right-click finishes |
+| **Visual Drawing** | Click-to-place drawing mode - left-click places points, right-click finishes |
 | **Path Follower** | Speed, easing, loop/pingpong modes, look-ahead alignment |
 
 ### Cinematics
@@ -373,7 +373,7 @@ The editor is a complete development environment with multiple tabs and floating
 - Full Three.js runtime (CDN)
 - Serialized scene data with embedded textures
 - Loading screen with progress bar
-- **FPS controls** — click to enter pointer lock, WASD + mouse look, Space/C for up/down
+- **FPS controls** - click to enter pointer lock, WASD + mouse look, Space/C for up/down
 - **Orbit controls** fallback when pointer lock is not active
 
 ---
