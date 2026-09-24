@@ -44,7 +44,6 @@ export class EngineSystemsPanel {
       { id: 'audio', icon: '🔊', label: 'Audio' },
       { id: 'lod', icon: '🔍', label: 'LOD System' },
       { id: 'splines', icon: '➰', label: 'Spline Paths' },
-      { id: 'plugins', icon: '🔌', label: 'Plugins' },
       { id: 'ecsystems', icon: '🧩', label: 'ECS Systems' },
     ];
 
@@ -80,7 +79,6 @@ export class EngineSystemsPanel {
         case 'audio': this.renderAudio(content); break;
         case 'lod': this.renderLOD(content); break;
         case 'splines': this.renderSplines(content); break;
-        case 'plugins': this.renderPlugins(content); break;
         case 'ecsystems': this.renderEcSystems(content); break;
       }
     };
@@ -1370,57 +1368,6 @@ export class EngineSystemsPanel {
 
     this._drawingPoints = [];
     this.refresh();
-  }
-
-  // ── Plugins ──
-  private renderPlugins(parent: HTMLElement): void {
-    const plugins = this.editor.engine.plugins;
-
-    const header = document.createElement('div');
-    header.style.cssText = 'font-size:18px;font-weight:600;color:#e0e0e0;margin-bottom:4px;';
-    header.textContent = '🔌 Plugin System';
-    parent.appendChild(header);
-    const desc = document.createElement('div');
-    desc.style.cssText = 'font-size:11px;color:#888;margin-bottom:12px;';
-    desc.textContent = 'Manage loaded plugins and extensions.';
-    parent.appendChild(desc);
-
-    const listSec = this.section(parent, 'Loaded Plugins');
-    const pluginList = plugins.listPlugins();
-    if (pluginList.length > 0) {
-      for (const p of pluginList) {
-        const r = document.createElement('div');
-        r.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#ccc;';
-        const status = p.active ? '🟢' : '🔴';
-        r.innerHTML = `<span>${status}</span> <span style="flex:1;">${p.name} <span style="color:#666;font-size:10px;">v${p.version ?? '?'}</span></span>`;
-
-        const toggleBtn = document.createElement('button');
-        toggleBtn.textContent = p.active ? 'Deactivate' : 'Activate';
-        toggleBtn.style.cssText = 'background:#333;border:1px solid #555;color:#ccc;cursor:pointer;padding:2px 8px;border-radius:3px;font-size:11px;';
-        toggleBtn.addEventListener('click', async () => {
-          if (p.active) {
-            plugins.deactivate(p.id);
-          } else {
-            await plugins.activate(p.id);
-          }
-          parent.innerHTML = '';
-          this.renderPlugins(parent);
-        });
-        r.appendChild(toggleBtn);
-        listSec.appendChild(r);
-      }
-    } else {
-      const empty = document.createElement('div');
-      empty.style.cssText = 'font-size:11px;color:#666;padding:8px 0;';
-      empty.textContent = 'No plugins loaded';
-      listSec.appendChild(empty);
-    }
-
-    const loadSec = this.section(parent, 'Register Plugin');
-    const infoText = document.createElement('div');
-    infoText.style.cssText = 'font-size:11px;color:#888;';
-    infoText.textContent = 'Plugins can be registered programmatically via engine.plugins.register(plugin).';
-    loadSec.appendChild(infoText);
   }
 
   // ── ECS Systems ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 /**
  * PlayModeSystem — Enhanced play / pause / step for the editor:
- * - Scene state snapshot & restore (full undo of play mode changes)
+ * - Scene transform snapshot & restore
  * - Pause with live inspection (select objects, read properties)
  * - Step-by-step execution (advance single frame)
  * - Slow-motion (time scale)
@@ -9,7 +9,6 @@
  */
 
 import * as THREE from 'three';
-import { SceneSerializer, type SceneData } from '../engine/BuildExportSystem';
 
 /* ─── Types ─────────────────────────────────────────── */
 
@@ -35,7 +34,6 @@ type PlayModeListener = (event: PlayModeEvent) => void;
 export class PlayModeSystem {
   private state: PlayState = 'stopped';
   private scene: THREE.Scene;
-  private snapshot: SceneData | null = null;
   private frame: number = 0;
   private elapsed: number = 0;
   private listeners: Map<string, PlayModeListener[]> = new Map();
@@ -169,10 +167,7 @@ export class PlayModeSystem {
   /* ── Snapshot ──────────────────────────────────────── */
 
   private takeSnapshot(): void {
-    // Full scene serialize
-    this.snapshot = SceneSerializer.serializeScene(this.scene, 'playmode_snapshot');
-
-    // Also store quick transform cache for fast restore
+    // Store a transform cache for fast restore
     this.objectStates.clear();
     this.scene.traverse((obj) => {
       this.objectStates.set(obj.uuid, {
@@ -224,7 +219,6 @@ export class PlayModeSystem {
     }
 
     this.objectStates.clear();
-    this.snapshot = null;
   }
 
   /* ── Events ───────────────────────────────────────── */
@@ -291,6 +285,5 @@ export class PlayModeSystem {
     this.overlay = null;
     this.listeners.clear();
     this.objectStates.clear();
-    this.snapshot = null;
   }
 }

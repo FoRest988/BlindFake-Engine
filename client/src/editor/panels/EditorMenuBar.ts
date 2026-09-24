@@ -1,6 +1,5 @@
 import type { EditorApp } from '../EditorApp';
 import { SceneSerializer } from '../../engine/SceneSerialization';
-import { GameExporter } from '../../engine/GameExporter';
 
 /**
  * EditorMenuBar — Full menu bar with File, Edit, View, Add, Window, Help menus.
@@ -122,10 +121,6 @@ export class EditorMenuBar {
       { label: 'Load Scene...', shortcut: 'Ctrl+O', action: () => this.loadScene() },
       { separator: true },
       { label: 'Import Model...', action: () => this.editor.addModel() },
-      { label: 'Export Scene JSON', action: () => this.saveScene() },
-      { label: '🚀 Export Game (HTML)', shortcut: 'Ctrl+E', action: () => this.exportGameHTML() },
-      { label: '� Export Game (ZIP Folder)', action: () => this.exportGameFolder() },
-      { label: '�📦 Export Scene JSON', action: () => this.exportSceneJSON() },
       { separator: true },
       { label: 'Preferences...', action: () => this.editor.preferences.toggle() },
       { separator: true },
@@ -231,44 +226,6 @@ export class EditorMenuBar {
       SceneSerializer.exportToFile(scene);
       this.editor.statusBar.setMessage('Scene saved');
     }
-  }
-
-  private async exportGameHTML(): Promise<void> {
-    const scene = this.editor.engine.scenes.active;
-    if (!scene) return;
-    this.editor.statusBar.setMessage('Exporting game...');
-    const blob = await GameExporter.exportAsHTML(scene, {
-      projectName: 'BlindFake: Phantom Game',
-      fullscreen: true,
-      shadows: true,
-      antialias: true,
-      showLoading: true,
-    });
-    GameExporter.download(blob, 'game.html');
-    this.editor.statusBar.setMessage('Game exported!');
-  }
-
-  private async exportGameFolder(): Promise<void> {
-    const scene = this.editor.engine.scenes.active;
-    if (!scene) return;
-    this.editor.statusBar.setMessage('Exporting game folder...');
-    const blob = await GameExporter.exportAsFolder(scene, {
-      projectName: 'BlindFake: Phantom Game',
-      fullscreen: true,
-      shadows: true,
-      antialias: true,
-      showLoading: true,
-    });
-    GameExporter.download(blob, 'game.zip');
-    this.editor.statusBar.setMessage('Game folder exported as ZIP!');
-  }
-
-  private exportSceneJSON(): void {
-    const scene = this.editor.engine.scenes.active;
-    if (!scene) return;
-    const blob = GameExporter.exportAsJSON(scene);
-    GameExporter.download(blob, 'scene.json');
-    this.editor.statusBar.setMessage('Scene JSON exported!');
   }
 
   private async loadScene(): Promise<void> {
