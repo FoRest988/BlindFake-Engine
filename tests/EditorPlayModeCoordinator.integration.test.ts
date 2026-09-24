@@ -48,7 +48,7 @@ describe('EditorPlayModeCoordinator', () => {
     const helper = { visible: true };
     const transformControls = { getHelper: () => helper } as any;
     const canvas = document.createElement('canvas');
-    canvas.requestPointerLock = vi.fn(() => {
+    canvas.requestPointerLock = vi.fn(async () => {
       (document as any).pointerLockElement = canvas;
     });
 

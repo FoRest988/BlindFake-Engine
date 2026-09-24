@@ -1,6 +1,13 @@
 node_modules/
 dist/
+.vite/
+coverage/
+error-logs/
+test-results/
+playwright-report/
+metrics.json
 *.log
 .env
+.env.*
 .DS_Store
 Thumbs.db

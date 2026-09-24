@@ -5,7 +5,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@engine': resolve(__dirname, 'client/src/engine'),
-      '@game': resolve(__dirname, 'client/src/game'),
       '@editor': resolve(__dirname, 'client/src/editor'),
       '@shared': resolve(__dirname, 'shared'),
     },
@@ -13,5 +12,12 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    coverage: {
+      provider: 'v8',
+      include: ['client/src/**/*.ts', 'server/src/**/*.ts', 'shared/**/*.ts'],
+      exclude: ['client/src/types/**'],
+      reporter: ['text-summary', 'json-summary', 'html'],
+      reportsDirectory: 'coverage',
+    },
   },
 });

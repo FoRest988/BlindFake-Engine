@@ -30,11 +30,11 @@ function createEngineStub() {
   document.body.appendChild(overlay);
 
   const createEntity = (name: string) => {
-    const components = new Map<Function, unknown>();
+    const components = new Map<unknown, unknown>();
     return {
       name,
       add(component: unknown) {
-        components.set((component as { constructor: Function }).constructor, component);
+        components.set((component as { constructor: unknown }).constructor, component);
         return this;
       },
       addTag() {

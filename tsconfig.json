@@ -11,13 +11,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
       "@engine/*": ["client/src/engine/*"],
-      "@game/*": ["client/src/game/*"],
       "@editor/*": ["client/src/editor/*"],
       "@shared/*": ["shared/*"]
     }

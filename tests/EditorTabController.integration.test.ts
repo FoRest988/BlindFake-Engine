@@ -38,6 +38,7 @@ describe('Editor layout and tabs', () => {
       visualScript: createPanelHandle('blueprints'),
       uiEditorPanel: createPanelHandle('ui'),
       modelingPanel: createPanelHandle('modeling'),
+      textureEditor: createPanelHandle('textures'),
     });
 
     let controller: EditorTabController;
@@ -106,6 +107,7 @@ describe('Editor layout and tabs', () => {
       visualScript: createPanelHandle('blueprints'),
       uiEditorPanel: createPanelHandle('ui'),
       modelingPanel: createPanelHandle('modeling'),
+      textureEditor: createPanelHandle('textures'),
     });
 
     let controller: EditorTabController;

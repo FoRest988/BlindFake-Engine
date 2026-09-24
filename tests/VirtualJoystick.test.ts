@@ -143,7 +143,7 @@ describe('VirtualJoystick', () => {
 
   describe('onChange callback', () => {
     it('fires onChange when axis changes', () => {
-      const cb = vi.fn<[JoystickAxis], void>();
+      const cb = vi.fn<(axis: JoystickAxis) => void>();
       const j  = new VirtualJoystick({ x: 100, y: 100, radius: 60, mode: 'fixed', deadZone: 0 });
       j.onChange = cb;
       j.pointerDown(1, 100, 100);
@@ -152,7 +152,7 @@ describe('VirtualJoystick', () => {
     });
 
     it('fires onChange with zeroed axis on release', () => {
-      const cb = vi.fn<[JoystickAxis], void>();
+      const cb = vi.fn<(axis: JoystickAxis) => void>();
       const j  = new VirtualJoystick({ x: 100, y: 100, radius: 60, mode: 'fixed', deadZone: 0 });
       j.onChange = cb;
       j.pointerDown(1, 100, 100);
