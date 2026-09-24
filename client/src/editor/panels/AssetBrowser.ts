@@ -374,12 +374,13 @@ export class AssetBrowser {
         // Could open in material editor
         console.info(`[AssetBrowser] Open texture: ${asset.name}`);
         break;
-      case 'audio':
+      case 'audio': {
         // Preview audio
         const audio = new Audio(asset.path);
         audio.play().catch(() => {});
         setTimeout(() => audio.pause(), 5000);
         break;
+      }
       default:
         console.info(`[AssetBrowser] Open: ${asset.name} (${asset.type})`);
     }

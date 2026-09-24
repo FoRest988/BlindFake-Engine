@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "client/src/engine/workers/*.ts",
+    "server/src/index.ts",
+    "tests/**/*.test.ts",
+    "e2e/**/*.spec.ts",
+    "scripts/*.mjs"
+  ],
+  "project": [
+    "client/src/**/*.ts",
+    "server/src/**/*.ts",
+    "shared/**/*.ts",
+    "tests/**/*.ts",
+    "e2e/**/*.ts",
+    "scripts/**/*.mjs"
+  ],
+  "rules": {
+    "exports": "off",
+    "types": "off",
+    "nsExports": "off",
+    "nsTypes": "off",
+    "enumMembers": "off",
+    "classMembers": "off",
+    "duplicates": "off"
+  }
+}

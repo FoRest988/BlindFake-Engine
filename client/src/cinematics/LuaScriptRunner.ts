@@ -526,6 +526,7 @@ export class LuaScriptRunner {
    */
   private _runGameScript(code: string, ctx: LuaGameContext, log: LuaLogFn): void {
     const scene = ctx.scene;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- legacy regex Lua runner, replaced by LuaHost in rework F4
     const _self = this;
     let _timerIdSeq = this._timerIdCounter;
     let _tweenIdSeq = this._tweenIdCounter;
@@ -721,7 +722,7 @@ export class LuaScriptRunner {
     try {
       const keys = Object.keys(sandbox);
       const vals = Object.values(sandbox);
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- legacy regex Lua runner, replaced by LuaHost in rework F4
       const fn = new Function(...keys, jsCode);
       fn(...vals);
     } catch (e) {
