@@ -411,4 +411,13 @@ Regra geral: cada fase termina com `npm run check` verde, o e2e `editor.smoke` p
 
 ## Primeiro passo ao sair do modo plano
 
-Executar a **F0** integralmente (instalar, `npm run check`, CI, lint, e2e smoke v0, `docs/decisions/0000-rework-plan.md`, tag `pre-rework`), commitar e fazer push na branch `claude/lucid-gauss-a1vpbn`, e só então iniciar a F1.
+**Escopo imediato desta execução: a F0 completa**, na branch `claude/lucid-gauss-a1vpbn`:
+1. `npm ci` e medir o estado real (`tsc`, `vitest run`, `vite build`, `build:server`).
+2. Corrigir o drift de configuração (`tsconfig*`, `@types/express@^4`, `engines.node`, `.nvmrc`, `.gitignore`, alias `@game`).
+3. Adicionar scripts `typecheck`/`typecheck:test`/`typecheck:server`/`lint`/`test:coverage`/`test:e2e`/`start`/`check`/`metrics`, ESLint 9, knip, Playwright.
+4. `scripts/metrics.mjs`, `scripts/check-encoding.mjs`, `docs/METRICS.md` com o baseline.
+5. `.github/workflows/ci.yml`.
+6. `e2e/editor.smoke.spec.ts` v0 (contador de contextos WebGL, 9 templates, 10 abas, Add Cube, Ctrl+Z, F9).
+7. Tag `pre-rework` em `caa28c7`; commits pequenos com push a cada bloco.
+
+Só depois de `npm run check` verde e o smoke passando é que a F1 começa.
