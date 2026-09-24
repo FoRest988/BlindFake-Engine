@@ -18,12 +18,8 @@ export interface EditorKeyboardShortcutsDeps {
   onToggleBones: () => void;
 }
 
-// Import KeybindEditor lazily to avoid circular refs — we only need its type here
-import type { KeybindEditor } from './KeybindEditor';
-
 export class EditorKeyboardShortcuts {
   private readonly deps: EditorKeyboardShortcutsDeps;
-  private _keybindEditor: KeybindEditor | null = null;
 
   private readonly onKey = (e: KeyboardEvent) => {
     if (e.key === 'F11') {
@@ -31,10 +27,6 @@ export class EditorKeyboardShortcuts {
       return;
     }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-    // When a KeybindEditor is connected, delegate to it first.
-    // It handles any user-defined rebindings and returns true if handled.
-    if (this._keybindEditor && this._keybindEditor.handleKeyDown(e)) return;
 
     switch (e.key.toLowerCase()) {
       case 'w': this.deps.onTranslate(); break;
@@ -91,20 +83,6 @@ export class EditorKeyboardShortcuts {
 
   constructor(deps: EditorKeyboardShortcutsDeps) {
     this.deps = deps;
-  }
-
-  /**
-   * Connect a KeybindEditor so that user-defined rebindings take effect.
-   * After calling this, the KeybindEditor will be consulted on every keydown
-   * event before the built-in switch/case handler.
-   *
-   * @example
-   *   const kb = new KeybindEditor();
-   *   kb.registerAll(deps);
-   *   shortcuts.useKeybindEditor(kb);
-   */
-  useKeybindEditor(kb: KeybindEditor): void {
-    this._keybindEditor = kb;
   }
 
   attach(): void {
