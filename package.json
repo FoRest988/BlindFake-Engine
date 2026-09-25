@@ -23,7 +23,7 @@
     "metrics": "node scripts/metrics.mjs",
     "check-encoding": "node scripts/check-encoding.mjs",
     "knip": "knip",
-    "check": "npm run typecheck && npm run typecheck:test && npm run typecheck:server && npm run lint && npm run check-readme-claims && npm run test:coverage && npm run build && npm run build:server",
+    "check": "npm run typecheck && npm run typecheck:test && npm run typecheck:server && npm run lint && npm run check-encoding && npm run check-readme-claims && npm run test:coverage && npm run build && npm run build:server",
     "check-readme-claims": "node scripts/check-readme-claims.mjs"
   },
   "dependencies": {

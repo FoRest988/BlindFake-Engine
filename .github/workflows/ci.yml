@@ -30,7 +30,6 @@ jobs:
       - run: npm run lint
       - run: npm run check-readme-claims
       - run: npm run check-encoding
-        continue-on-error: true # blocking from F2 (mojibake is fixed there)
       - run: npm run knip
       - run: npm run test:coverage
       - run: npm run build

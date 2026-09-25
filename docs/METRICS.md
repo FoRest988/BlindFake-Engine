@@ -65,6 +65,20 @@ Outros números da F0 que não saem do script:
 | `check-encoding` | 15 arquivos | 2 (`LuaScriptRunner.ts`, `ModelingRiggingPanel.ts`; F2) |
 | templates | 9 | 3 |
 
+## Após a F2 (bugs de runtime)
+
+| métrica | após F1 | após F2 |
+|---|---|---|
+| productLines | 52.361 | 52.719 (GameLoop, protocolo compartilhado e servidor validado entraram) |
+| itBlocks | 144 | 157 (GameLoop, ECS dispose/timings, servidor e NetworkManager contra servidor real) |
+| webglRenderers | 7 | 6 (o editor desenha com o renderer da engine) |
+| contextos WebGL na aba Scene (e2e) | ≤ 8 | ≤ 2 (engine + cubo de navegação; 1 a partir da F5) |
+| editorActiveUses | 13 | 0 (`engine.setMode`) |
+| addEventListener / removeEventListener | 569 / 63 | 568 / 65 |
+| `check-encoding` | 2 arquivos | 0 (gate bloqueante no CI e em `npm run check`) |
+| erosão em worker no build de produção | quebrado (asset `.ts`) | funciona (chunk `erosionWorker-*.js`) |
+| servidor derrubado por mensagem malformada | sim | não (`tests/server/protocol.test.ts`) |
+
 ## Metas
 
 | métrica | F1 | F2 | F3 | F4 | F5 | F7 | F9 |

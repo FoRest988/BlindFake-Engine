@@ -1072,9 +1072,9 @@ export class TerrainEditorPanel {
       const tile = this.terrain;
       const config = tile.getConfig();
       const heightCopy = new Float32Array(tile.getHeightData());
-      const workerUrl = new URL('../engine/workers/erosionWorker.ts', import.meta.url);
       let worker: Worker;
-      try { worker = new Worker(workerUrl, { type: 'module' }); }
+      // `new URL(...)` must be written inline for Vite to bundle the worker in production builds.
+      try { worker = new Worker(new URL('../engine/workers/erosionWorker.ts', import.meta.url), { type: 'module' }); }
       catch { if (statusEl) statusEl.textContent = '⚠ Worker not available'; return; }
       if (statusEl) statusEl.textContent = '⏳ Running erosion…';
       worker.postMessage({ heightData: heightCopy.buffer, resolution: config.resolution, droplets: drops }, [heightCopy.buffer]);

@@ -7,6 +7,8 @@ export class EngineSystemsPanel {
   private editor: EditorApp;
   private container: HTMLElement;
   private _renderContent: (() => void) | null = null;
+  /** Timers/observers owned by the currently rendered section; run before it is replaced. */
+  private _sectionCleanups: Array<() => void> = [];
 
   // Spline drawing state
   private _drawingSpline = false;
@@ -28,7 +30,17 @@ export class EngineSystemsPanel {
     if (this._renderContent) this._renderContent();
   }
 
+  private runSectionCleanups(): void {
+    for (const fn of this._sectionCleanups.splice(0)) fn();
+  }
+
+  /** Stop timers and observers owned by the rendered section. */
+  dispose(): void {
+    this.runSectionCleanups();
+  }
+
   render(): HTMLElement {
+    this.runSectionCleanups();
     this.container.innerHTML = '';
 
     // Sidebar with system list
@@ -69,6 +81,7 @@ export class EngineSystemsPanel {
     };
 
     const renderContent = () => {
+      this.runSectionCleanups();
       content.innerHTML = '';
       switch (activeSystem) {
         case 'weather': this.renderWeather(content); break;
@@ -1476,11 +1489,11 @@ export class EngineSystemsPanel {
     // Observe the table to start/stop polling when the tab becomes visible
     observer.observe(table);
 
-    // Clean up on re-render (panel detach)
-    const cleanup = () => {
+    // Clean up when the section is replaced or the panel is disposed
+    // (the deprecated mutation event used before no longer fires in current Chromium).
+    this._sectionCleanups.push(() => {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
       observer.disconnect();
-    };
-    parent.addEventListener('DOMNodeRemoved', cleanup, { once: true });
+    });
   }
 }

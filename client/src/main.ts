@@ -18,7 +18,7 @@ console.log(`
 
 // --- Landing Page ---
 const landingEl = document.getElementById('landing-page')!;
-initDevErrorTracker();
+if (import.meta.env.DEV) initDevErrorTracker(); // dev-only: posts to /api/dev-errors, which exists only outside production
 new LandingPage(landingEl, (project) => startProject(project));
 
 function startProject(project: ProjectInfo): void {

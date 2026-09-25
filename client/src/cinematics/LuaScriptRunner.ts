@@ -1,11 +1,11 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import type { CinematicEngine, CinematicTrack, CinematicKeyframe } from './CinematicEngine';
 
-// 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?
-// PHASE 13 鈥?Lua Scripting: Extended API, Hot-Reload, Debugger
-// 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?
+// ═══════════════════════════════════════════════════════════════
+// PHASE 13 — Lua Scripting: Extended API, Hot-Reload, Debugger
+// ═══════════════════════════════════════════════════════════════
 
-/* 鈹€鈹€鈹€ Lua API Reference (for autocomplete) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* ─── Lua API Reference (for autocomplete) ──────────────────── */
 export interface LuaAPIEntry {
   label: string;
   detail: string;
@@ -14,74 +14,74 @@ export interface LuaAPIEntry {
 
 export const LUA_API_REFERENCE: Record<string, LuaAPIEntry[]> = {
   scene: [
-    { label: 'scene.spawn(name, geom, x, y, z)', detail: '鈫?object', doc: 'Spawn a new mesh into the scene.' },
-    { label: 'scene.find(name)', detail: '鈫?object | nil', doc: 'Find a scene object by name.' },
-    { label: 'scene.destroy(name)', detail: '鈫?void', doc: 'Remove an object from the scene.' },
-    { label: 'scene.setPosition(name, x, y, z)', detail: '鈫?void', doc: 'Set world position.' },
-    { label: 'scene.getPosition(name)', detail: '鈫?x, y, z', doc: 'Get world position.' },
-    { label: 'scene.setRotation(name, x, y, z)', detail: '鈫?void', doc: 'Set Euler rotation (radians).' },
-    { label: 'scene.setScale(name, x, y, z)', detail: '鈫?void', doc: 'Set uniform or per-axis scale.' },
-    { label: 'scene.setVisible(name, visible)', detail: '鈫?void', doc: 'Show or hide an object.' },
-    { label: 'scene.setColor(name, r, g, b)', detail: '鈫?void', doc: 'Set material color (0..1).' },
-    { label: 'scene.findByTag(tag)', detail: '鈫?table', doc: 'Find all objects with a userData.tag.' },
-    { label: 'scene.getChildren(name)', detail: '鈫?table', doc: 'Get child objects of a parent.' },
+    { label: 'scene.spawn(name, geom, x, y, z)', detail: '→ object', doc: 'Spawn a new mesh into the scene.' },
+    { label: 'scene.find(name)', detail: '→ object | nil', doc: 'Find a scene object by name.' },
+    { label: 'scene.destroy(name)', detail: '→ void', doc: 'Remove an object from the scene.' },
+    { label: 'scene.setPosition(name, x, y, z)', detail: '→ void', doc: 'Set world position.' },
+    { label: 'scene.getPosition(name)', detail: '→ x, y, z', doc: 'Get world position.' },
+    { label: 'scene.setRotation(name, x, y, z)', detail: '→ void', doc: 'Set Euler rotation (radians).' },
+    { label: 'scene.setScale(name, x, y, z)', detail: '→ void', doc: 'Set uniform or per-axis scale.' },
+    { label: 'scene.setVisible(name, visible)', detail: '→ void', doc: 'Show or hide an object.' },
+    { label: 'scene.setColor(name, r, g, b)', detail: '→ void', doc: 'Set material color (0..1).' },
+    { label: 'scene.findByTag(tag)', detail: '→ table', doc: 'Find all objects with a userData.tag.' },
+    { label: 'scene.getChildren(name)', detail: '→ table', doc: 'Get child objects of a parent.' },
   ],
   physics: [
-    { label: 'physics.applyForce(name, x, y, z)', detail: '鈫?void', doc: 'Apply a continuous force to a rigidbody.' },
-    { label: 'physics.applyImpulse(name, x, y, z)', detail: '鈫?void', doc: 'Apply an instant impulse.' },
-    { label: 'physics.setVelocity(name, x, y, z)', detail: '鈫?void', doc: 'Set linear velocity directly.' },
-    { label: 'physics.getVelocity(name)', detail: '鈫?x, y, z', doc: 'Get current linear velocity.' },
-    { label: 'physics.raycast(ox, oy, oz, dx, dy, dz, maxDist)', detail: '鈫?hit, x, y, z, dist', doc: 'Cast a ray and return first hit.' },
-    { label: 'physics.setGravity(x, y, z)', detail: '鈫?void', doc: 'Change global gravity vector.' },
-    { label: 'physics.setKinematic(name, kinematic)', detail: '鈫?void', doc: 'Toggle kinematic mode on a body.' },
+    { label: 'physics.applyForce(name, x, y, z)', detail: '→ void', doc: 'Apply a continuous force to a rigidbody.' },
+    { label: 'physics.applyImpulse(name, x, y, z)', detail: '→ void', doc: 'Apply an instant impulse.' },
+    { label: 'physics.setVelocity(name, x, y, z)', detail: '→ void', doc: 'Set linear velocity directly.' },
+    { label: 'physics.getVelocity(name)', detail: '→ x, y, z', doc: 'Get current linear velocity.' },
+    { label: 'physics.raycast(ox, oy, oz, dx, dy, dz, maxDist)', detail: '→ hit, x, y, z, dist', doc: 'Cast a ray and return first hit.' },
+    { label: 'physics.setGravity(x, y, z)', detail: '→ void', doc: 'Change global gravity vector.' },
+    { label: 'physics.setKinematic(name, kinematic)', detail: '→ void', doc: 'Toggle kinematic mode on a body.' },
   ],
   input: [
-    { label: 'input.isKeyDown(code)', detail: '鈫?bool', doc: 'True while key is held (KeyCode string).' },
-    { label: 'input.isKeyPressed(code)', detail: '鈫?bool', doc: 'True only on the frame key was pressed.' },
-    { label: 'input.isKeyReleased(code)', detail: '鈫?bool', doc: 'True only on the frame key was released.' },
-    { label: 'input.getAxis(name)', detail: '鈫?number', doc: 'Get named axis value (-1..1). Names: Horizontal, Vertical.' },
-    { label: 'input.mouseX()', detail: '鈫?number', doc: 'Mouse X in screen pixels.' },
-    { label: 'input.mouseY()', detail: '鈫?number', doc: 'Mouse Y in screen pixels.' },
-    { label: 'input.isMouseDown(btn)', detail: '鈫?bool', doc: 'True while mouse button is held (0=left).' },
+    { label: 'input.isKeyDown(code)', detail: '→ bool', doc: 'True while key is held (KeyCode string).' },
+    { label: 'input.isKeyPressed(code)', detail: '→ bool', doc: 'True only on the frame key was pressed.' },
+    { label: 'input.isKeyReleased(code)', detail: '→ bool', doc: 'True only on the frame key was released.' },
+    { label: 'input.getAxis(name)', detail: '→ number', doc: 'Get named axis value (-1..1). Names: Horizontal, Vertical.' },
+    { label: 'input.mouseX()', detail: '→ number', doc: 'Mouse X in screen pixels.' },
+    { label: 'input.mouseY()', detail: '→ number', doc: 'Mouse Y in screen pixels.' },
+    { label: 'input.isMouseDown(btn)', detail: '→ bool', doc: 'True while mouse button is held (0=left).' },
   ],
   audio: [
-    { label: 'audio.play(url, volume)', detail: '鈫?void', doc: 'Play a sound effect once.' },
-    { label: 'audio.playMusic(url, fadeIn)', detail: '鈫?void', doc: 'Play background music with optional fade-in.' },
-    { label: 'audio.stopMusic(fadeOut)', detail: '鈫?void', doc: 'Stop background music with optional fade-out.' },
-    { label: 'audio.stop(url)', detail: '鈫?void', doc: 'Stop a playing sound by URL.' },
-    { label: 'audio.setVolume(group, vol)', detail: '鈫?void', doc: 'Set volume of a group (sfx, music, master).' },
-    { label: 'audio.play3D(url, x, y, z, vol)', detail: '鈫?void', doc: 'Play a 3D positional sound.' },
+    { label: 'audio.play(url, volume)', detail: '→ void', doc: 'Play a sound effect once.' },
+    { label: 'audio.playMusic(url, fadeIn)', detail: '→ void', doc: 'Play background music with optional fade-in.' },
+    { label: 'audio.stopMusic(fadeOut)', detail: '→ void', doc: 'Stop background music with optional fade-out.' },
+    { label: 'audio.stop(url)', detail: '→ void', doc: 'Stop a playing sound by URL.' },
+    { label: 'audio.setVolume(group, vol)', detail: '→ void', doc: 'Set volume of a group (sfx, music, master).' },
+    { label: 'audio.play3D(url, x, y, z, vol)', detail: '→ void', doc: 'Play a 3D positional sound.' },
   ],
   timer: [
-    { label: 'timer.after(seconds, fn)', detail: '鈫?id', doc: 'Call fn once after a delay in seconds.' },
-    { label: 'timer.every(seconds, fn)', detail: '鈫?id', doc: 'Call fn repeatedly at an interval.' },
-    { label: 'timer.cancel(id)', detail: '鈫?void', doc: 'Cancel a timer by its id.' },
-    { label: 'timer.getTime()', detail: '鈫?number', doc: 'Get total elapsed time in seconds.' },
-    { label: 'timer.getDelta()', detail: '鈫?number', doc: 'Get last frame delta time in seconds.' },
+    { label: 'timer.after(seconds, fn)', detail: '→ id', doc: 'Call fn once after a delay in seconds.' },
+    { label: 'timer.every(seconds, fn)', detail: '→ id', doc: 'Call fn repeatedly at an interval.' },
+    { label: 'timer.cancel(id)', detail: '→ void', doc: 'Cancel a timer by its id.' },
+    { label: 'timer.getTime()', detail: '→ number', doc: 'Get total elapsed time in seconds.' },
+    { label: 'timer.getDelta()', detail: '→ number', doc: 'Get last frame delta time in seconds.' },
   ],
   event: [
-    { label: 'event.emit(name, data)', detail: '鈫?void', doc: 'Broadcast a named event with optional data.' },
-    { label: 'event.on(name, fn)', detail: '鈫?id', doc: 'Subscribe to a named event. Returns subscription id.' },
-    { label: 'event.off(id)', detail: '鈫?void', doc: 'Unsubscribe from an event.' },
-    { label: 'event.once(name, fn)', detail: '鈫?id', doc: 'Subscribe once, auto-removed after first call.' },
+    { label: 'event.emit(name, data)', detail: '→ void', doc: 'Broadcast a named event with optional data.' },
+    { label: 'event.on(name, fn)', detail: '→ id', doc: 'Subscribe to a named event. Returns subscription id.' },
+    { label: 'event.off(id)', detail: '→ void', doc: 'Unsubscribe from an event.' },
+    { label: 'event.once(name, fn)', detail: '→ id', doc: 'Subscribe once, auto-removed after first call.' },
   ],
   tween: [
-    { label: 'tween.to(name, prop, target, duration, ease)', detail: '鈫?id', doc: 'Animate an object property to a value.' },
-    { label: 'tween.from(name, prop, from, duration, ease)', detail: '鈫?id', doc: 'Animate from a value to current.' },
-    { label: 'tween.cancel(id)', detail: '鈫?void', doc: 'Cancel a running tween.' },
+    { label: 'tween.to(name, prop, target, duration, ease)', detail: '→ id', doc: 'Animate an object property to a value.' },
+    { label: 'tween.from(name, prop, from, duration, ease)', detail: '→ id', doc: 'Animate from a value to current.' },
+    { label: 'tween.cancel(id)', detail: '→ void', doc: 'Cancel a running tween.' },
     { label: 'tween.eases', detail: 'linear|quad|cubic|sine|bounce|elastic', doc: 'Available easing functions.' },
   ],
   debug: [
-    { label: 'debug.log(msg)', detail: '鈫?void', doc: 'Print info to the script log.' },
-    { label: 'debug.warn(msg)', detail: '鈫?void', doc: 'Print warning (yellow) to the script log.' },
-    { label: 'debug.error(msg)', detail: '鈫?void', doc: 'Print error (red) to the script log.' },
-    { label: 'debug.drawRay(ox,oy,oz, dx,dy,dz, color, dur)', detail: '鈫?void', doc: 'Draw a debug ray in the viewport.' },
-    { label: 'debug.drawSphere(x,y,z, r, color, dur)', detail: '鈫?void', doc: 'Draw a debug sphere wireframe.' },
-    { label: 'debug.watch(name, value)', detail: '鈫?void', doc: 'Push a variable to the watch panel.' },
+    { label: 'debug.log(msg)', detail: '→ void', doc: 'Print info to the script log.' },
+    { label: 'debug.warn(msg)', detail: '→ void', doc: 'Print warning (yellow) to the script log.' },
+    { label: 'debug.error(msg)', detail: '→ void', doc: 'Print error (red) to the script log.' },
+    { label: 'debug.drawRay(ox,oy,oz, dx,dy,dz, color, dur)', detail: '→ void', doc: 'Draw a debug ray in the viewport.' },
+    { label: 'debug.drawSphere(x,y,z, r, color, dur)', detail: '→ void', doc: 'Draw a debug sphere wireframe.' },
+    { label: 'debug.watch(name, value)', detail: '→ void', doc: 'Push a variable to the watch panel.' },
   ],
 };
 
-/* 鈹€鈹€鈹€ Lua Debugger 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* ─── Lua Debugger ───────────────────────────────────────────── */
 export interface LuaBreakpoint {
   line: number;
   enabled: boolean;
@@ -99,7 +99,7 @@ export interface LuaCallStackFrame {
 }
 
 export class LuaDebugger {
-  private breakpoints = new Map<number, LuaBreakpoint>(); // line 鈫?bp
+  private breakpoints = new Map<number, LuaBreakpoint>(); // line → bp
   private watches: LuaWatchEntry[] = [];
   private _callStack: LuaCallStackFrame[] = [];
   private _stepMode = false;
@@ -195,7 +195,7 @@ export class LuaDebugger {
   }
 }
 
-/* 鈹€鈹€鈹€ Hot-Reload Manager 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* ─── Hot-Reload Manager ─────────────────────────────────────── */
 export class LuaHotReloadManager {
   private scripts = new Map<string, { code: string; mtime: number; autoReload: boolean }>();
   private checkInterval: ReturnType<typeof setInterval> | null = null;
@@ -267,7 +267,7 @@ export class LuaHotReloadManager {
   }
 }
 
-/* 鈹€鈹€鈹€ Extended Lua API for interpreter 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* ─── Extended Lua API for interpreter ──────────────────────── */
 
 /** Log callback type used by the extended interpreter. */
 export type LuaLogFn = (level: 'info' | 'warn' | 'error', msg: string) => void;
@@ -288,11 +288,11 @@ export interface LuaGameContext {
   timers?: Map<number, { fn: () => void; interval: number; remaining: number; repeat: boolean }>;
   /** Active tweens. */
   tweens?: Map<number, { obj: THREE.Object3D; prop: string; from: number; to: number; elapsed: number; duration: number; ease: string }>;
-  /** Watch panel entries: name 鈫?current value string */
+  /** Watch panel entries: name → current value string */
   watchPanel?: Map<string, string>;
 }
 
-/* 鈹€鈹€鈹€ Extended Lua Script Templates 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+/* ─── Extended Lua Script Templates ─────────────────────────── */
 export const EXTENDED_LUA_TEMPLATES: Record<string, string> = {
   'Lua: Hello World': `-- Lua Hello World
 function start()
@@ -531,7 +531,7 @@ export class LuaScriptRunner {
     let _timerIdSeq = this._timerIdCounter;
     let _tweenIdSeq = this._tweenIdCounter;
 
-    // 鈹€鈹€鈹€ API sandbox objects 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+    // ─── API sandbox objects ────────────────────────────────────
     const _scene = {
       spawn: (objName: string, geom: string, x = 0, y = 0, z = 0) => {
         if (!scene) return null;
@@ -598,7 +598,7 @@ export class LuaScriptRunner {
         if (hits.length > 0) return [true, hits[0].point.x, hits[0].point.y, hits[0].point.z, hits[0].distance];
         return [false, 0, 0, 0, 0];
       },
-      setGravity: (_x: number, _y: number, _z: number) => { log('info', `[physics] setGravity(${_x}, ${_y}, ${_z}) 鈥?hook into physics engine`); },
+      setGravity: (_x: number, _y: number, _z: number) => { log('info', `[physics] setGravity(${_x}, ${_y}, ${_z}) — hook into physics engine`); },
       setKinematic: (name: string, k: boolean) => { const o = scene?.getObjectByName(name); if (o) o.userData._kinematic = k; },
     };
 
@@ -696,7 +696,7 @@ export class LuaScriptRunner {
       },
     };
 
-    // 鈹€鈹€鈹€ Parse & execute game script lines 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+    // ─── Parse & execute game script lines ────────────────────
     this._parseAndRunGameScript(code, {
       scene: _scene, physics: _physics, input: _input,
       audio: _audio, timer: _timer, event: _event,
@@ -731,40 +731,40 @@ export class LuaScriptRunner {
   }
 
   /**
-   * Phase 13: Lua 鈫?JS transpiler for game scripts.
+   * Phase 13: Lua → JS transpiler for game scripts.
    * Translates common Lua patterns to equivalent JS.
    */
   private _luaToJS(lua: string): string {
     let js = lua;
 
-    // Comments: -- 鈫?//
+    // Comments: -- → //
     js = js.replace(/--\[\[[\s\S]*?\]\]/g, '/* $& */');
     js = js.replace(/--(.*)$/gm, '//$1');
 
-    // String: single 鈫?double (basic)
+    // String: single → double (basic)
     // (handled by keeping as-is, both work in JS)
 
     // Boolean literals
     js = js.replace(/\btrue\b/g, 'true').replace(/\bfalse\b/g, 'false');
     js = js.replace(/\bnil\b/g, 'null');
 
-    // not 鈫?!
+    // not → !
     js = js.replace(/\bnot\s+/g, '!');
 
     // and / or
     js = js.replace(/\band\b/g, '&&');
     js = js.replace(/\bor\b/g, '||');
 
-    // ~= 鈫?!==
+    // ~= → !==
     js = js.replace(/~=/g, '!==');
 
-    // String concat .. 鈫?+
+    // String concat .. → +
     js = js.replace(/\.\./g, '+');
 
-    // # (length operator) 鈫?.length  鈥?simple cases only
+    // # (length operator) → .length  — simple cases only
     js = js.replace(/#(\w+)/g, '$1.length');
 
-    // local var = 鈫?let var =
+    // local var = → let var =
     js = js.replace(/\blocal\s+(\w+)\s*=/g, 'let $1 =');
     js = js.replace(/\blocal\s+(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*=/g, 'let [$1, $2, $3, $4] =');
     js = js.replace(/\blocal\s+(\w+)\s*,\s*(\w+)\s*,\s*(\w+)\s*=/g, 'let [$1, $2, $3] =');
@@ -775,16 +775,16 @@ export class LuaScriptRunner {
     js = js.replace(/\bfunction\s+(\w+)\s*\(/g, 'function $1(');
     js = js.replace(/\bfunction\s*\(/g, 'function(');
 
-    // if ... then 鈫?if (...) {
+    // if ... then → if (...) {
     js = js.replace(/\bif\s+(.*?)\s+then\b/g, (_, cond) => `if (${cond}) {`);
-    // elseif 鈫?} else if
+    // elseif → } else if
     js = js.replace(/\belseif\s+(.*?)\s+then\b/g, (_, cond) => `} else if (${cond}) {`);
-    // else 鈫?} else {
+    // else → } else {
     js = js.replace(/\belse\b/g, '} else {');
-    // end 鈫?}
+    // end → }
     js = js.replace(/\bend\b/g, '}');
 
-    // while ... do 鈫?while (...) {
+    // while ... do → while (...) {
     js = js.replace(/\bwhile\s+(.*?)\s+do\b/g, (_, cond) => `while (${cond}) {`);
 
     // for i = a, b, c do  (numeric)
@@ -797,27 +797,27 @@ export class LuaScriptRunner {
     js = js.replace(/\bfor\s+(\w+)\s*,\s*(\w+)\s+in\s+ipairs\s*\(\s*(\w+)\s*\)\s+do\b/g,
       (_, k, v, t) => `for (let [${k}, ${v}] of (${t}??[]).entries()) {`);
 
-    // tostring 鈫?String, tonumber 鈫?Number
+    // tostring → String, tonumber → Number
     js = js.replace(/\btostring\b/g, 'String');
     js = js.replace(/\btonumber\b/g, 'Number');
 
-    // math.* 鈥?already available via sandbox.math = Math
+    // math.* — already available via sandbox.math = Math
     js = js.replace(/\bmath\./g, 'math.');
 
-    // table.insert(t, v) 鈫?t.push(v)
+    // table.insert(t, v) → t.push(v)
     js = js.replace(/\btable\.insert\s*\(\s*(\w+)\s*,\s*([^)]+)\)/g, '$1.push($2)');
-    // table.remove(t, i) 鈫?t.splice(i-1, 1)
+    // table.remove(t, i) → t.splice(i-1, 1)
     js = js.replace(/\btable\.remove\s*\(\s*(\w+)\s*,\s*([^)]+)\)/g, '$1.splice($2-1, 1)');
-    // #table 鈫?table.length
+    // #table → table.length
     js = js.replace(/#(\w+)/g, '$1.length');
 
-    // print 鈫?debug.log (if used)
+    // print → debug.log (if used)
     js = js.replace(/\bprint\s*\(/g, 'debug.log(');
 
-    // Lua's multi-return: local a, b, c = fn() 鈫?let [a, b, c] = fn()
+    // Lua's multi-return: local a, b, c = fn() → let [a, b, c] = fn()
     js = js.replace(/\blet\s+\[(\w+(?:\s*,\s*\w+)*)\]\s*=/g, 'let [$1] =');
 
-    // Lua self. 鈫?this.  (limited use, skip for safety)
+    // Lua self. → this.  (limited use, skip for safety)
 
     return js;
   }
