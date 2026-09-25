@@ -1399,7 +1399,6 @@ export class EngineSystemsPanel {
         <tr style="border-bottom:1px solid #444;color:#888;">
           <th style="text-align:left;padding:4px 6px;font-weight:500;">System</th>
           <th style="text-align:right;padding:4px 6px;font-weight:500;">Priority</th>
-          <th style="text-align:right;padding:4px 6px;font-weight:500;">Budget (ms)</th>
           <th style="text-align:right;padding:4px 6px;font-weight:500;">Last (ms)</th>
           <th style="text-align:center;padding:4px 6px;font-weight:500;">Enabled</th>
         </tr>
@@ -1424,11 +1423,6 @@ export class EngineSystemsPanel {
       tdPri.style.cssText = 'padding:5px 6px;text-align:right;color:#888;';
       tdPri.textContent = String(system.priority);
 
-      // Budget
-      const tdBudget = document.createElement('td');
-      tdBudget.style.cssText = 'padding:5px 6px;text-align:right;color:#888;';
-      tdBudget.textContent = system.tickBudgetMs > 0 ? system.tickBudgetMs.toFixed(1) : '—';
-
       // Last frame time (polled)
       const tdLast = document.createElement('td');
       tdLast.style.cssText = 'padding:5px 6px;text-align:right;color:#888;font-family:monospace;';
@@ -1448,7 +1442,7 @@ export class EngineSystemsPanel {
       });
       tdEnabled.appendChild(toggle);
 
-      tr.append(tdName, tdPri, tdBudget, tdLast, tdEnabled);
+      tr.append(tdName, tdPri, tdLast, tdEnabled);
       tbody.appendChild(tr);
     }
 
@@ -1464,16 +1458,13 @@ export class EngineSystemsPanel {
       const visible = entries[0]?.isIntersecting ?? false;
       if (visible && !pollTimer) {
         pollTimer = setInterval(() => {
-          // getSystemTimings() returns last-frame ms; sample each interval
-          // If tickBudgetMs=0 the system isn't instrumented, so show '—'
+          // getSystemTimings() returns the ms each system took in the last completed frame
+          const timings = world.getSystemTimings();
           for (const [sys, cell] of timingCells) {
-            const s = sys as import('../../ecs/System').System;
-            if (s.tickBudgetMs > 0) {
-              const timings = world.getSystemTimings();
-              const ms = timings.get(s) ?? 0;
-              cell.textContent = ms > 0 ? ms.toFixed(2) : '< 0.01';
-              cell.style.color = ms > s.tickBudgetMs ? '#f88' : '#8f8';
-            }
+            const ms = timings.get(sys as import('../../ecs/System').System);
+            if (ms === undefined) { cell.textContent = '—'; cell.style.color = '#555'; continue; }
+            cell.textContent = ms >= 0.01 ? ms.toFixed(2) : '< 0.01';
+            cell.style.color = ms > 4 ? '#f88' : '#8f8';
           }
         }, POLL_MS);
       } else if (!visible && pollTimer) {

@@ -527,9 +527,10 @@ export class RapierPhysicsEngine {
     // Drain collision events
     this.eventQueue.drainCollisionEvents((h1, h2, started) => {
       if (this.onContact) {
-        const eA = this.handleToEntity.get(h1) ?? -1;
-        const eB = this.handleToEntity.get(h2) ?? -1;
-        if (eA >= 0 && eB >= 0) {
+        // Terrain/static colliders use negative ids, so test for presence rather than sign
+        const eA = this.handleToEntity.get(h1);
+        const eB = this.handleToEntity.get(h2);
+        if (eA !== undefined && eB !== undefined) {
           this.onContact({ entityA: eA, entityB: eB, started });
         }
       }

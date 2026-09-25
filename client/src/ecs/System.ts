@@ -24,14 +24,6 @@ export abstract class System {
    */
   public readonly writeComponents: ComponentClass[] = [];
 
-  /**
-   * Maximum milliseconds this system may consume in a single frame.
-   * When > 0 and exceeded, the system is skipped for the remainder of
-   * the current frame and will run again next frame.
-   * Set to 0 (default) to disable the budget.
-   */
-  public tickBudgetMs = 0;
-
   abstract update(delta: number, elapsed: number): void;
 
   init(): void {}
