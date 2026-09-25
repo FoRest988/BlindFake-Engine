@@ -56,14 +56,8 @@ function startProject(project: ProjectInfo): void {
   document.getElementById('editor-root')!.classList.remove('hidden');
   editorApp.open();
 
-  // --- Restore saved scene data ---
-  if (project.sceneData) {
-    try {
-      const data = JSON.parse(project.sceneData);
-      // SceneSerializer restore could happen here
-      console.info('[Project] Restored scene data for:', project.name, data);
-    } catch { /* ignore corrupted data */ }
-  }
+  // Saved scene content is offered back by the per-project autosave prompt (EditorAutosaveService).
+  // A real project file with entities, scripts and assets arrives in rework F4.
 
   engine.start();
 }

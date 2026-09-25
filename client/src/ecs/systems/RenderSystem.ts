@@ -23,6 +23,8 @@ export class RenderSystem extends System {
 
       // Add to scene if not already
       if (!mesh.addedToScene) {
+        // Owned by the ECS: recreated by gameplay code, never serialized or replaced by scene loads
+        mesh.object3D.userData.__ecsOwned = true;
         scene.add(mesh.object3D);
         mesh.addedToScene = true;
       }

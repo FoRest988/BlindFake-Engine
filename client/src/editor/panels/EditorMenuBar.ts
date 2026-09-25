@@ -229,14 +229,7 @@ export class EditorMenuBar {
     if (!scene) return;
     const data = await SceneSerializer.importFromFile();
     if (data) {
-      const loaded = SceneSerializer.deserialize(data);
-      const toRemove = scene.children.filter(c => !c.userData.__editorHelper);
-      toRemove.forEach(c => scene.remove(c));
-      while (loaded.children.length > 0) {
-        scene.add(loaded.children[0]);
-      }
-      this.editor.select(null);
-      this.editor.hierarchy.refresh();
+      this.editor.replaceSceneContent(data);
       this.editor.statusBar.setMessage('Scene loaded');
     }
   }

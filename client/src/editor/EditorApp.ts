@@ -15,7 +15,9 @@ import { EditorPreferences } from './panels/EditorPreferences';
 import { SceneGizmos } from './SceneGizmos';
 import { VisualScriptEditor } from './panels/VisualScriptEditor';
 import { PlayModeSystem } from './PlayModeSystem';
-import { SceneSerializer } from '../engine/SceneSerialization';
+import { SceneSerializer, type SerializedScene } from '../engine/SceneSerialization';
+import { LandingPage } from '../LandingPage';
+import { MeshComponent } from '../ecs/components/GameComponents';
 import { TerrainEditorPanel } from './TerrainEditorPanel';
 import { CinematicEditorTab } from './CinematicEditorTab';
 import { AnimationEditorPanel } from './AnimationEditorPanel';
@@ -394,12 +396,13 @@ export class EditorApp {
       },
     });
     this.autosaveService = new EditorAutosaveService({
+      projectId: this.projectId,
       getPreferences: () => this.preferences.get(),
       getActiveScene: () => this.engine.scenes.active,
       serializeScene: (scene) => SceneSerializer.serialize(scene),
-      deserializeScene: (data, targetScene) => SceneSerializer.deserialize(data, targetScene),
-      rebuildHierarchy: () => this.hierarchy.rebuild(),
+      restoreScene: (data) => this.replaceSceneContent(data),
       setStatusMessage: (message) => this.statusBar.setMessage(message),
+      onSaved: (json) => { if (this.projectId) LandingPage.saveProjectScene(this.projectId, json); },
       storage: typeof localStorage === 'undefined' ? undefined : localStorage,
     });
     this.viewportInputController = new EditorViewportInputController({
@@ -1188,6 +1191,29 @@ export class EditorApp {
     if (!activeScene) return;
     SceneSerializer.exportToFile(activeScene);
     this.statusBar.setMessage('Scene saved');
+  }
+
+  /**
+   * Replace the editable content of the scene with serialized data.
+   * Editor helpers and ECS-owned objects (recreated by gameplay code) are kept;
+   * everything else is removed before the saved objects are added, so a restore never duplicates.
+   */
+  replaceSceneContent(data: SerializedScene): void {
+    const scene = this.scene;
+    const ecsOwned = new Set(this.engine.world.query(MeshComponent).map((e) => e.get(MeshComponent).object3D));
+    for (const child of [...scene.children]) {
+      if (child.userData.__editorHelper || child.userData.__ecsOwned || ecsOwned.has(child)) continue;
+      if (child === this.gridHelper || child === this.axisHelper || child === this.transformControls.getHelper()) continue;
+      if (child instanceof THREE.GridHelper || child instanceof THREE.AxesHelper || child instanceof THREE.BoxHelper) continue;
+      scene.remove(child);
+    }
+    const loaded = SceneSerializer.deserialize(data);
+    scene.name = loaded.name;
+    scene.background = loaded.background;
+    scene.fog = loaded.fog;
+    while (loaded.children.length > 0) scene.add(loaded.children[0]);
+    this.select(null);
+    this.hierarchy.refresh();
   }
 
   private resolveViewportDropPoint(event: DragEvent): THREE.Vector3 | null {

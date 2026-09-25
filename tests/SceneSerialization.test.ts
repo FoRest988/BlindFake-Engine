@@ -52,3 +52,20 @@ describe('SceneSerialization', () => {
     expect(restoredMaterial.map).toBe(replacementTexture);
   });
 });
+describe('SceneSerializer skips objects the editor or the ECS owns', () => {
+  it('leaves out editor helpers, transform gizmos and ECS-owned meshes', () => {
+    const scene = new THREE.Scene();
+    const user = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+    user.name = 'UserCube';
+    const helper = new THREE.Object3D();
+    helper.userData.__editorHelper = true;
+    const ecs = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial());
+    ecs.userData.__ecsOwned = true;
+    const gizmo = Object.assign(new THREE.Object3D(), { isTransformControls: true });
+    scene.add(user, helper, ecs, gizmo, new THREE.GridHelper(10, 10));
+
+    const data = SceneSerializer.serialize(scene);
+
+    expect(data.objects.map((o) => o.name)).toEqual(['UserCube']);
+  });
+});
