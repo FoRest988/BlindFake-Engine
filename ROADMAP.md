@@ -15,4 +15,4 @@ O roadmap é o plano de rework em `docs/decisions/0000-rework-plan.md` (versão 
 | F8 | Runtime empacotado, export HTML/ZIP/single-file e desktop | Planejado |
 | F9 | Multiplayer mínimo real, docs geradas, fechamento | Planejado |
 
-O que foi removido na F1 e por quê está listado em `README.md` (tabela "Removido") e nas mensagens de commit correspondentes. O commit anterior ao rework está marcado com a tag `pre-rework`.
+O que foi removido na F1 e por quê está listado em `README.md` (tabela "Removido") e nas mensagens de commit correspondentes. O commit anterior ao rework está preservado na branch `pre-rework` (`caa28c7`).

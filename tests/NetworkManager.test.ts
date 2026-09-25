@@ -2,8 +2,14 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { createGameServer, type GameServer } from '../server/src/server';
 import { NetworkManager, NetworkManagerError, defaultServerUrl } from '../client/src/network/NetworkManager';
 import { MessageType } from '../shared/types';
+import WebSocketImpl from 'ws';
 
-/** The client under test talks to a real server on an ephemeral port (Node's global WebSocket). */
+// Node 22+ ships a global WebSocket; Node 20 (also in CI) does not, so fall back to the `ws` package.
+if (typeof globalThis.WebSocket === 'undefined') {
+  (globalThis as unknown as { WebSocket: unknown }).WebSocket = WebSocketImpl;
+}
+
+/** The client under test talks to a real server on an ephemeral port over a real WebSocket. */
 let server: GameServer;
 let url: string;
 const managers: NetworkManager[] = [];
