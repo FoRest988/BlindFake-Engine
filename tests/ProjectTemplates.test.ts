@@ -63,7 +63,7 @@ function createEngineStub() {
       mouseDeltaY: 0,
       scrollDelta: 0,
     },
-    editorActive: true,
+    mode: 'edit',
   } as any;
 }
 
@@ -116,7 +116,7 @@ describe('ProjectTemplates', () => {
 
     // Pointer lock is now requested via a document-level mousedown listener
     // that checks e.target === the active viewport canvas.
-    engine.editorActive = false;
+    engine.mode = 'play';
     const event = new MouseEvent('mousedown', { bubbles: true });
     Object.defineProperty(event, 'target', { value: engine.viewportCanvas });
     document.dispatchEvent(event);
@@ -137,7 +137,7 @@ describe('ProjectTemplates', () => {
     expect(transform).toBeDefined();
     expect(firstCoin?.visible).toBe(true);
 
-    engine.editorActive = false;
+    engine.mode = 'play';
     transform?.position.copy(firstCoin!.position);
     resettableUpdate?.(1 / 60, 0);
 

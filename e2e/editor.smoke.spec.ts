@@ -10,7 +10,10 @@ import { test, expect, type Page } from '@playwright/test';
 
 const TEMPLATES = ['3d', '2d', 'platformer3d'] as const;
 const TABS = ['scene', 'terrain', 'animation', 'cinematic', 'statemachine', 'scripting', 'blueprints', 'ui', 'modeling', 'textures'] as const;
-const MAX_WEBGL_CONTEXTS = 8;
+// Scene tab: the engine renderer + the navigation cube (shares the renderer from F5 on).
+const MAX_SCENE_WEBGL_CONTEXTS = 2;
+// After visiting every tab: the four per-tab preview renderers still exist until F7.
+const MAX_WEBGL_CONTEXTS = 7;
 
 declare global {
   interface Window {
@@ -55,6 +58,8 @@ for (const template of TEMPLATES) {
 
     await installContextCounter(page);
     await openProject(page, template);
+    const sceneState = await page.evaluate(() => window.__bfTest);
+    expect(sceneState.webglContexts).toBeLessThanOrEqual(MAX_SCENE_WEBGL_CONTEXTS);
 
     for (const tab of TABS) {
       await page.click(`.editor-tab[data-tab="${tab}"]`);
@@ -68,11 +73,14 @@ for (const template of TEMPLATES) {
     await page.keyboard.press('Escape');
     await page.keyboard.press('Control+z');
 
-    // Play, then stop.
+    // Play (game HUD overlay becomes visible), then stop (it hides again).
     await page.keyboard.press('F9');
+    await expect(page.locator('body')).toHaveClass(/bf-mode-play/);
+    await expect(page.locator('#ui-overlay')).toBeVisible();
     await page.waitForTimeout(500);
     await page.keyboard.press('F9');
-    await page.waitForTimeout(250);
+    await expect(page.locator('body')).toHaveClass(/bf-mode-edit/);
+    await expect(page.locator('#ui-overlay')).toBeHidden();
 
     const state = await page.evaluate(() => window.__bfTest);
     expect(pageErrors, `page errors:\n${pageErrors.join('\n')}`).toEqual([]);

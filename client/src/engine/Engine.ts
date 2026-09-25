@@ -12,6 +12,7 @@ import { AISystem } from '../ecs/systems/AISystem';
 import { CharacterControllerSystem } from '../ecs/systems/CharacterControllerSystem';
 import { RapierPhysicsEngine } from './RapierPhysics';
 import { MaterialLibrary } from './MaterialLibrary';
+import { MAX_FRAME_DT } from './loop/GameLoop';
 
 // New engine subsystems
 import { AudioManager } from './AudioManager';
@@ -52,6 +53,8 @@ import { StatusEffectSystem } from '../gameplay/StatusEffectSystem';
 import { AchievementSystem } from '../gameplay/AchievementSystem';
 import { PerformanceManager, RenderStatsOverlay } from './PerformanceManager';
 import { DamagePopupSystem } from '../gameplay/DamagePopup';
+
+export type EngineMode = 'edit' | 'play';
 
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
@@ -130,8 +133,20 @@ export class Engine {
   /** User-defined callback that runs each frame before rendering */
   public onUpdate: ((delta: number, elapsed: number) => void) | null = null;
 
-  /** When true, the editor is active — ECS physics/game systems are paused */
-  public editorActive = false;
+  /**
+   * 'play': full simulation. 'edit': only systems flagged `runsInEditMode`
+   * (transform sync) tick, and runtime systems (physics, AI, tweens, ...) pause.
+   */
+  public mode: EngineMode = 'play';
+
+  /** Hooks run once per frame after the ECS and runtime updates, before rendering. */
+  private readonly frameHooks = new Set<(delta: number, elapsed: number) => void>();
+
+  /** When set, replaces the default render of the active scene (the editor uses it). */
+  public renderOverride: ((delta: number) => void) | null = null;
+
+  /** When true the renderer follows the window size; the editor turns this off and calls setViewportSize(). */
+  public autoResize = true;
 
   /** The active viewport canvas — set by EditorApp so templates use the correct canvas for pointer lock / mouse events */
   public viewportCanvas: HTMLCanvasElement | null = null;
@@ -142,7 +157,6 @@ export class Engine {
       canvas: config.canvas,
       antialias: config.antialias ?? true,
       powerPreference: 'high-performance',
-      logarithmicDepthBuffer: true,   // eliminates z-fighting at distance
       stencil: false,                 // saves VRAM (re-enable if needed)
     });
     this.renderer.setPixelRatio(config.pixelRatio ?? Math.min(window.devicePixelRatio, 2));
@@ -231,7 +245,10 @@ export class Engine {
     this.events.on('terrain:applied', () => this.physicsSystem.markTerrainDirty());
 
     // Initialize Rapier WASM (async, physics starts when ready)
-    this.physicsSystem.initRapier();
+    this.physicsSystem.initRapier().catch((err: unknown) => {
+      console.error('[Engine] Physics initialisation failed:', err);
+      this.events.emit('physics:error', err);
+    });
     // Forward raw Rapier contact events onto the shared EventBus
     this.physicsSystem.rapier.onContact = (event) => {
       this.events.emit('physics:collision', event);
@@ -240,6 +257,32 @@ export class Engine {
 
   /** Access the Rapier physics engine for raycasts, forces, joints etc. */
   get physics(): RapierPhysicsEngine { return this.physicsSystem.rapier; }
+
+  /** Switch between editing (simulation paused) and playing (full simulation). */
+  setMode(mode: EngineMode): void {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    if (typeof document !== 'undefined') {
+      document.body.classList.toggle('bf-mode-edit', mode === 'edit');
+      document.body.classList.toggle('bf-mode-play', mode === 'play');
+    }
+    this.events.emit('engine:mode', mode);
+  }
+
+  /** Register a per-frame hook; returns a function that removes it. */
+  addFrameHook(hook: (delta: number, elapsed: number) => void): () => void {
+    this.frameHooks.add(hook);
+    return () => { this.frameHooks.delete(hook); };
+  }
+
+  /** Resize the renderer, the default camera and the post-processing targets to a viewport. */
+  setViewportSize(width: number, height: number): void {
+    if (width <= 0 || height <= 0) return;
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+    this.postProcessing.resize(width, height);
+  }
 
   /**
    * Batch static (non-moving) meshes in the active scene to reduce draw calls.
@@ -268,29 +311,38 @@ export class Engine {
     if (!this.running) return;
     this.animFrameId = requestAnimationFrame(this.loop);
 
-    this.performance.frameStart();
-    const delta = Math.min(this.clock.getDelta(), 0.1); // Cap delta to prevent spiral
+    const delta = Math.min(this.clock.getDelta(), MAX_FRAME_DT);
     const elapsed = this.clock.elapsedTime;
-    const activeScene = this.scenes.active;
-
     this.updateFpsCounter();
+    this.tick(delta, elapsed);
+    this.render(delta);
+  };
+
+  /** Advance the simulation by one frame without rendering (usable headless). */
+  tick(delta: number, elapsed: number): void {
+    this.performance.frameStart();
+    const activeScene = this.scenes.active;
     this.prepareActiveScene(activeScene);
-    this.world.update(delta, elapsed);
-    if (!this.editorActive) this.updateRuntimeSystems(delta);
+    this.world.update(delta, elapsed, this.mode);
+    if (this.mode === 'play') this.updateRuntimeSystems(delta);
     this.updateAlwaysOnSystems(delta);
 
     // User game logic callback (runs before render, after ECS)
     if (this.onUpdate) {
       this.onUpdate(delta, elapsed);
     }
-
-    this.renderActiveScene(activeScene);
-
-    this.performance.frameEnd();
+    for (const hook of this.frameHooks) hook(delta, elapsed);
 
     // Flush input at end of frame so justPressed is available during update
     this.input.update();
-  };
+  }
+
+  /** Render the active scene, or hand off to the render override (the editor's viewport). */
+  render(delta: number): void {
+    if (this.renderOverride) this.renderOverride(delta);
+    else this.renderActiveScene(this.scenes.active);
+    this.performance.frameEnd();
+  }
 
   private updateFpsCounter(): void {
     this.fpsCounter.frames++;
@@ -430,12 +482,8 @@ export class Engine {
   }
 
   private onResize(): void {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
-    this.postProcessing.resize(w, h);
+    if (!this.autoResize) return;
+    this.setViewportSize(window.innerWidth, window.innerHeight);
   }
 
   dispose(): void {

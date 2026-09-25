@@ -3,6 +3,7 @@ import { System } from '../System';
 import { TransformComponent, PhysicsBodyComponent, MeshComponent } from '../components/GameComponents';
 import { RapierPhysicsEngine, BodyDescriptor } from '../../engine/RapierPhysics';
 import type { Entity } from '../Entity';
+import { FIXED_DT, GameLoop } from '../../engine/loop/GameLoop';
 
 export class PhysicsSystem extends System {
   public priority = 10;
@@ -10,6 +11,8 @@ export class PhysicsSystem extends System {
   public rapier: RapierPhysicsEngine;
 
   private registeredEntities = new Set<number>();
+  /** Fixed-step accumulator: physics runs at FIXED_DT regardless of the frame rate. */
+  private readonly loop = new GameLoop();
   private terrainEntityIds = new Set<number>();
   private terrainDirty = true;
   private nextTerrainId = -100000;
@@ -44,6 +47,7 @@ export class PhysicsSystem extends System {
     }
     this.terrainEntityIds.clear();
     this.terrainDirty = true;
+    this.loop.reset();
     // Zero out velocities so next play starts clean
     const entities = this.world.query(TransformComponent, PhysicsBodyComponent);
     for (const entity of entities) {
@@ -71,7 +75,7 @@ export class PhysicsSystem extends System {
   }
 
   update(delta: number, _elapsed: number): void {
-    if (!this.enabled || !this.rapier.isReady) return;
+    if (!this.rapier.isReady) return;
 
     if (this.terrainDirty) this.syncTerrainColliders();
 
@@ -113,8 +117,9 @@ export class PhysicsSystem extends System {
       }
     }
 
-    // Step physics
-    this.rapier.step(delta);
+    // Step physics at a fixed rate so results do not depend on the frame rate
+    const steps = this.loop.advance(delta);
+    for (let i = 0; i < steps; i++) this.rapier.step(FIXED_DT);
 
     // Post-step: sync dynamic bodies from Rapier → ECS (zero allocation via *Into methods)
     for (const entity of entities) {

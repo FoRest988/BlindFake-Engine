@@ -7,7 +7,6 @@ import { EditorPlayModeCoordinator } from '../client/src/editor/EditorPlayModeCo
 function createPhysicsSystem() {
   const state = { hasBody: false };
   return {
-    enabled: false,
     scene: null as THREE.Scene | null,
     markTerrainDirty: vi.fn(),
     resetAllBodies: vi.fn(),
@@ -54,7 +53,8 @@ describe('EditorPlayModeCoordinator', () => {
 
     const physics = createPhysicsSystem();
     const engine = {
-      editorActive: true,
+      mode: 'edit',
+      setMode: vi.fn((mode: string) => { engine.mode = mode; }),
       onUpdate: null,
       world: { getSystem: vi.fn(() => physics) },
     } as any;
@@ -74,12 +74,14 @@ describe('EditorPlayModeCoordinator', () => {
     });
 
     coordinator.enter();
+    expect(engine.mode).toBe('play');
     editorCamera.position.set(20, 30, 40);
     orbitControls.target.set(9, 9, 9);
     coordinator.exit();
 
-    expect(engine.editorActive).toBe(true);
-    expect(physics.enabled).toBe(false);
+    expect(engine.mode).toBe('edit');
+    expect(engine.setMode).toHaveBeenNthCalledWith(1, 'play');
+    expect(engine.setMode).toHaveBeenNthCalledWith(2, 'edit');
     expect(physics.markTerrainDirty).toHaveBeenCalledOnce();
     expect(physics.resetAllBodies).toHaveBeenCalledOnce();
     expect(physics.rapier.createBody).toHaveBeenCalledOnce();
@@ -99,7 +101,8 @@ describe('EditorPlayModeCoordinator', () => {
 
     const coordinator = new EditorPlayModeCoordinator({
       engine: {
-        editorActive: true,
+        mode: 'edit',
+        setMode: vi.fn(),
         onUpdate: null,
         world: { getSystem: vi.fn(() => physics) },
       } as any,
@@ -127,7 +130,8 @@ describe('EditorPlayModeCoordinator', () => {
 
     const coordinator = new EditorPlayModeCoordinator({
       engine: {
-        editorActive: true,
+        mode: 'edit',
+        setMode: vi.fn(),
         onUpdate: runtimeUpdate,
         world: { getSystem: vi.fn(() => physics) },
       } as any,

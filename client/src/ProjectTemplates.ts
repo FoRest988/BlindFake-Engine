@@ -422,7 +422,7 @@ function setup3DDefault(engine: Engine, scene: THREE.Scene): TemplateResult {
   };
 
   const updateFn = (delta: number, elapsed: number) => {
-    if (engine.editorActive) {
+    if (engine.mode === 'edit') {
       objectiveEl.style.display = 'none';
       crystalEl.style.display = 'none';
       hintEl.style.display = 'none';
@@ -753,7 +753,7 @@ function setup2DEmpty(engine: Engine, scene: THREE.Scene): TemplateResult {
   };
 
   const updateFn = (delta: number, elapsed: number) => {
-    if (engine.editorActive) {
+    if (engine.mode === 'edit') {
       objectiveEl.style.display = 'none';
       batteryEl.style.display = 'none';
       checkpointEl.style.display = 'none';
@@ -1098,7 +1098,7 @@ function setupPlatformer3D(engine: Engine, scene: THREE.Scene): TemplateResult {
   // Pointer lock — resolved lazily so the correct canvas is used whether
   // the template is running in standalone mode or inside the editor viewport.
   const onDocumentMouseDownPlatformer = (e: MouseEvent) => {
-    if (engine.editorActive) return;
+    if (engine.mode === 'edit') return;
     const activeCanvas = engine.viewportCanvas ?? engine.renderer.domElement;
     if (e.target !== activeCanvas) return;
     if (document.pointerLockElement !== activeCanvas) {
@@ -1145,7 +1145,7 @@ function setupPlatformer3D(engine: Engine, scene: THREE.Scene): TemplateResult {
   };
 
   const updateFn = (delta: number, _elapsed: number) => {
-    if (engine.editorActive) {
+    if (engine.mode === 'edit') {
       scoreEl.style.display = 'none';
       statusEl.style.display = 'none';
       return;

@@ -60,11 +60,10 @@ export class EditorPlayModeCoordinator {
     this.savedPlayOrbitTarget.copy(this.orbitControls.target);
 
     this.orbitControls.enabled = false;
-    this.engine.editorActive = false;
+    this.engine.setMode('play');
 
     const physics = this.engine.world.getSystem(PhysicsSystem);
     if (physics) {
-      physics.enabled = true;
       physics.scene = this.scene;
       physics.markTerrainDirty();
 
@@ -91,7 +90,7 @@ export class EditorPlayModeCoordinator {
 
   exit(): void {
     this.teardown();
-    this.engine.editorActive = true;
+    this.engine.setMode('edit');
     this.orbitControls.enabled = true;
 
     this.editorCamera.position.copy(this.savedPlayCameraPos);
@@ -101,7 +100,6 @@ export class EditorPlayModeCoordinator {
 
     const physics = this.engine.world.getSystem(PhysicsSystem);
     if (physics) {
-      physics.enabled = false;
       physics.resetAllBodies();
     }
 
@@ -172,10 +170,9 @@ export class EditorPlayModeCoordinator {
   }
 
   resumeFromPause(): void {
-    this.engine.editorActive = false;
+    this.engine.setMode('play');
     const physics = this.engine.world.getSystem(PhysicsSystem);
     if (physics) {
-      physics.enabled = true;
       physics.scene = this.scene;
     }
   }

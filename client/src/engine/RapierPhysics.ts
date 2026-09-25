@@ -517,10 +517,11 @@ export class RapierPhysicsEngine {
 
   // ── Simulation Step ────────────────────────────────────────────────
 
+  /** Advance the world by exactly `dt` seconds (the caller supplies a fixed step). */
   step(dt: number): void {
     if (!this.initialized) return;
 
-    this.world.timestep = Math.min(dt, 1 / 30);
+    this.world.timestep = dt;
     this.world.step(this.eventQueue);
 
     // Drain collision events

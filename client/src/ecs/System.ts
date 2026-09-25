@@ -8,6 +8,9 @@ export abstract class System {
   /** Lower priority runs first */
   public priority = 0;
 
+  /** Systems that must keep running while the editor is in 'edit' mode (e.g. transform sync). */
+  public runsInEditMode = false;
+
   /**
    * Component types this system only reads.
    * Used by the World execution graph to detect safe-to-parallelise groups.

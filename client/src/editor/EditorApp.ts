@@ -98,15 +98,14 @@ export class EditorApp {
   // DOM
   private root: HTMLElement;
   private viewportContainer: HTMLElement | null = null;
-  private editorRenderer: THREE.WebGLRenderer;
   private editorCanvas: HTMLCanvasElement;
+  /** The editor draws with the engine's single renderer. */
+  private get editorRenderer(): THREE.WebGLRenderer { return this.engine.renderer; }
+  private frameHookDispose: (() => void) | null = null;
 
   // Public accessors for panels
   get camera(): THREE.PerspectiveCamera { return this.editorCamera; }
   get controls(): OrbitControls { return this.orbitControls; }
-  private clock = new THREE.Clock();
-  private running = false;
-  private animFrameId = 0;
 
   // Editor helpers
   private gridHelper: THREE.GridHelper;
@@ -141,7 +140,11 @@ export class EditorApp {
   // Scene animation mixers (for in-editor animation preview)
   private _sceneMixers: THREE.AnimationMixer[] = [];
 
-  constructor(engine: Engine) {
+  /** Id of the project being edited (used for per-project persistence). */
+  public readonly projectId: string | null;
+
+  constructor(engine: Engine, options: { projectId?: string } = {}) {
+    this.projectId = options.projectId ?? null;
     this.engine = engine;
 
     this.state = {
@@ -169,22 +172,11 @@ export class EditorApp {
     this.editorCamera.position.set(15, 12, 15);
     this.editorCamera.lookAt(0, 0, 0);
 
-    // Create editor canvas/renderer
-    this.editorCanvas = document.createElement('canvas');
-    this.editorCanvas.id = 'editor-canvas';
-    // Tell engine that the visible viewport is the editor canvas (for templates' pointer lock etc.)
+    // One renderer: the engine's canvas is re-parented into the editor viewport (see buildLayout).
+    this.editorCanvas = engine.renderer.domElement;
     engine.viewportCanvas = this.editorCanvas;
     engine.input.setCanvas(this.editorCanvas);
-    this.editorRenderer = new THREE.WebGLRenderer({
-      canvas: this.editorCanvas,
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
-    this.editorRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.editorRenderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.editorRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.editorRenderer.shadowMap.enabled = true;
-    this.editorRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    engine.autoResize = false;
 
     // Grid & Axis
     this.gridHelper = new THREE.GridHelper(200, 200, 0x444444, 0x2a2a2a);
@@ -473,9 +465,9 @@ export class EditorApp {
   open(): void {
     document.body.classList.add('editor-mode');
     this.buildLayout();
-    this.running = true;
-    this.clock.start();
-    this.loop();
+    this.engine.setMode('edit');
+    this.frameHookDispose = this.engine.addFrameHook(this.onFrame);
+    this.engine.renderOverride = this.renderFrame;
     this.keyboardShortcuts.attach();
 
     // Hook play mode events (from overlay buttons)
@@ -590,8 +582,11 @@ export class EditorApp {
       this.playMode.stop();
       this.exitPlayMode();
     }
-    this.running = false;
-    cancelAnimationFrame(this.animFrameId);
+    this.frameHookDispose?.();
+    this.frameHookDispose = null;
+    this.engine.renderOverride = null;
+    this.engine.autoResize = true;
+    this.detachGameSurfaces();
     if (this._playModePlayHandler) this.playMode.off('play', this._playModePlayHandler);
     if (this._playModeStopHandler) this.playMode.off('stop', this._playModeStopHandler);
     this.disposePanels();
@@ -651,6 +646,7 @@ export class EditorApp {
     });
 
     this.viewportContainer = layout.viewportContainer;
+    this.attachGameSurfaces();
     this.tabController = new EditorTabController({
       root: this.root,
       tabBar: layout.tabBar,
@@ -673,11 +669,23 @@ export class EditorApp {
     this.listeners.push(() => window.removeEventListener('resize', onResize));
   }
 
-  private loop = (): void => {
-    if (!this.running) return;
-    this.animFrameId = requestAnimationFrame(this.loop);
+  /** Move the game UI overlay into the viewport so HUDs draw over the editor canvas in play mode. */
+  private attachGameSurfaces(): void {
+    const overlay = document.getElementById('ui-overlay');
+    if (overlay && this.viewportContainer) this.viewportContainer.appendChild(overlay);
+  }
 
-    const delta = this.clock.getDelta();
+  /** Return the canvas and the UI overlay to the game container when the editor closes. */
+  private detachGameSurfaces(): void {
+    const container = document.getElementById('game-container');
+    if (!container) return;
+    container.prepend(this.editorCanvas);
+    const overlay = document.getElementById('ui-overlay');
+    if (overlay) container.appendChild(overlay);
+  }
+
+  /** Per-frame editor update, driven by the engine loop (after ECS/runtime updates, before render). */
+  private onFrame = (delta: number): void => {
 
     const isPlaying = this.playMode.isPlaying() || this.playMode.isPaused();
 
@@ -698,11 +706,11 @@ export class EditorApp {
     // Scene gizmos
     this.sceneGizmos.update();
 
-    // Play mode — engine loop handles game system updates via editorActive flag
+    // Play mode — the engine loop runs the game systems while engine.mode === 'play'
     const playDelta = this.playMode.update(delta);
 
-    // Update weather in editor (always, so it's visible)
-    this.engine.weather.update(delta);
+    // In edit mode the engine pauses its runtime systems; keep the previews alive here.
+    if (this.engine.mode === 'edit') this.engine.weather.update(delta);
 
     // Update grid visibility
     this.gridHelper.visible = this.state.showGrid;
@@ -737,9 +745,10 @@ export class EditorApp {
       helper.visible = this.state.showBones;
     }
 
-    // Update engine systems (particles, camera effects, audio)
-    this.engine.particles.update(delta);
-    this.engine.cameraEffects.update(delta);
+    if (this.engine.mode === 'edit') {
+      this.engine.particles.update(delta);
+      this.engine.cameraEffects.update(delta);
+    }
     this.engine.audio.updateListener(this.editorCamera);
 
     // Update any animation mixers on scene objects (for in-editor animation preview)
@@ -748,6 +757,12 @@ export class EditorApp {
         mixer.update(delta);
       }
     }
+
+  };
+
+  /** Render the editor viewport with the engine renderer (installed as engine.renderOverride). */
+  private renderFrame = (): void => {
+    const selectionBox = this.selectionController.getPrimarySelectionBox();
 
     // Render — split mode bypasses post-processing and renders 4 independent viewports
     if (this.viewport.isSplitModeEnabled()) {
@@ -1093,9 +1108,7 @@ export class EditorApp {
     if (rect.width === 0 || rect.height === 0) return;
     this.editorCamera.aspect = rect.width / rect.height;
     this.editorCamera.updateProjectionMatrix();
-    this.editorRenderer.setSize(rect.width, rect.height);
-    // Resize post-processing render targets to match viewport
-    this.engine.postProcessing.resize(rect.width, rect.height);
+    this.engine.setViewportSize(rect.width, rect.height);
   }
 
   private createResizer(direction: 'h' | 'v', target: HTMLElement, prop: 'width' | 'height', reverse = false): HTMLElement {

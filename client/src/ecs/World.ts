@@ -190,7 +190,7 @@ export class World {
     }
   }
 
-  update(delta: number, elapsed: number): void {
+  update(delta: number, elapsed: number, mode: 'edit' | 'play' = 'play'): void {
     // Remove queued entities
     for (const id of this.entitiesToRemove) {
       const entity = this.entities.get(id);
@@ -208,6 +208,7 @@ export class World {
     // Update all systems — enforce per-system tick budget when set
     for (const system of this.systems) {
       if (!system.enabled) continue;
+      if (mode === 'edit' && !system.runsInEditMode) continue;
 
       if (system.tickBudgetMs > 0) {
         const start = performance.now();
