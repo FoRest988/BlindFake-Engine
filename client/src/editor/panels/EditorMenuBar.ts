@@ -120,11 +120,9 @@ export class EditorMenuBar {
       { label: 'Save Scene', shortcut: 'Ctrl+S', action: () => this.saveScene() },
       { label: 'Load Scene...', shortcut: 'Ctrl+O', action: () => this.loadScene() },
       { separator: true },
-      { label: 'Import Model...', action: () => this.editor.addModel() },
+      { label: '📦 Import Model...', action: () => this.editor.addModel() },
       { separator: true },
       { label: 'Preferences...', action: () => this.editor.preferences.toggle() },
-      { separator: true },
-      { label: 'Exit to Game', shortcut: 'F9', action: () => this.editor.close() },
     ];
   }
 
@@ -177,11 +175,11 @@ export class EditorMenuBar {
       { separator: true },
       { label: '📷 Camera', action: () => this.editor.addCamera() },
       { separator: true },
-      { label: '�️ Movement Path', action: () => this.editor.addSplinePath('movement') },
+      { label: '🛤️ Movement Path', action: () => this.editor.addSplinePath('movement') },
       { label: '🧱 Collision Wall', action: () => this.editor.addSplinePath('collision') },
       { label: '🎥 Camera Path', action: () => this.editor.addSplinePath('camera') },
       { separator: true },
-      { label: '�📦 Import Model...', action: () => this.editor.addModel() },
+      { label: '📦 Import Model...', action: () => this.editor.addModel() },
     ];
   }
 
@@ -189,10 +187,8 @@ export class EditorMenuBar {
     return [
       { label: 'Hierarchy', action: () => this.editor.togglePanel('hierarchy') },
       { label: 'Inspector', action: () => this.editor.togglePanel('inspector') },
-      { label: 'Timeline', action: () => this.editor.togglePanel('timeline') },
       { label: 'Console', action: () => this.editor.togglePanel('console') },
       { separator: true },
-      { label: 'Asset Browser', action: () => this.editor.switchTab('scene') },
       { label: 'Visual Script Editor', action: () => this.editor.switchTab('blueprints') },
       { label: '🔨 Modeling & Rigging', action: () => this.editor.switchTab('modeling') },
       { label: '⚙️ Engine Systems', action: () => this.editor.toggleEngineSystems() },

@@ -4,7 +4,6 @@ export interface EditorTabControllerArgs {
   root: HTMLElement;
   tabBar: HTMLElement;
   bodyEl: HTMLElement;
-  timelinePanel: HTMLElement | null;
   tabDefinitions: EditorTabDefinition[];
   resizeViewport: () => void;
   initialTab?: PrimaryEditorTab;
@@ -14,7 +13,6 @@ export class EditorTabController {
   private readonly root: HTMLElement;
   private readonly tabBar: HTMLElement;
   private readonly bodyEl: HTMLElement;
-  private readonly timelinePanel: HTMLElement | null;
   private readonly tabDefinitions: EditorTabDefinition[];
   private readonly resizeViewport: () => void;
   private activeTab: PrimaryEditorTab;
@@ -23,7 +21,6 @@ export class EditorTabController {
     this.root = args.root;
     this.tabBar = args.tabBar;
     this.bodyEl = args.bodyEl;
-    this.timelinePanel = args.timelinePanel;
     this.tabDefinitions = args.tabDefinitions;
     this.resizeViewport = args.resizeViewport;
     this.activeTab = args.initialTab ?? 'scene';
@@ -88,9 +85,6 @@ export class EditorTabController {
 
   private showSceneTab(): void {
     this.bodyEl.style.display = '';
-    if (this.timelinePanel) {
-      this.timelinePanel.style.display = 'none';
-    }
     requestAnimationFrame(() => this.resizeViewport());
   }
 

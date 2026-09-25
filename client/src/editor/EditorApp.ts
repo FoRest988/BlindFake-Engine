@@ -12,11 +12,8 @@ import { EditorMenuBar } from './panels/EditorMenuBar';
 import { UndoManager, TransformCommand, type TransformSnapshot } from './UndoManager';
 import { EditorConsole } from './panels/EditorConsole';
 import { EditorPreferences } from './panels/EditorPreferences';
-import { AssetBrowser } from './panels/AssetBrowser';
-import { MaterialEditor } from './panels/MaterialEditor';
 import { SceneGizmos } from './SceneGizmos';
 import { VisualScriptEditor } from './panels/VisualScriptEditor';
-import { MultiSelect } from './MultiSelect';
 import { PlayModeSystem } from './PlayModeSystem';
 import { SceneSerializer } from '../engine/SceneSerialization';
 import { TerrainEditorPanel } from './TerrainEditorPanel';
@@ -84,11 +81,8 @@ export class EditorApp {
   // Extended panels
   public console: EditorConsole;
   public preferences: EditorPreferences;
-  public assetBrowser: AssetBrowser;
-  public materialEditor: MaterialEditor;
   public sceneGizmos: SceneGizmos;
   public visualScript: VisualScriptEditor;
-  public multiSelect: MultiSelect;
   public playMode: PlayModeSystem;
   public terrainEditor: TerrainEditorPanel;
   public cinematicEditor: CinematicEditorTab;
@@ -358,11 +352,8 @@ export class EditorApp {
     // Extended panels
     this.console = new EditorConsole(this);
     this.preferences = new EditorPreferences(this);
-    this.assetBrowser = new AssetBrowser(this);
-    this.materialEditor = new MaterialEditor(this);
     this.sceneGizmos = new SceneGizmos(this.scene, this.editorCamera, this.editorCanvas);
     this.visualScript = new VisualScriptEditor();
-    this.multiSelect = new MultiSelect(this.scene);
     this.playMode = new PlayModeSystem(this.scene);
     this.terrainEditor = new TerrainEditorPanel(this);
     this.cinematicEditor = new CinematicEditorTab(this);
@@ -641,13 +632,14 @@ export class EditorApp {
   }
 
   private buildLayout(): void {
+    // The timeline widget lives inside the Animation tab; render it so the tab can adopt its container.
+    this.timeline.render();
     const layout = buildEditorLayout({
       root: this.root,
       menuBar: this.menuBar.render(),
       toolbar: this.toolbar.render(),
       hierarchy: this.hierarchy.render(),
       inspector: this.inspector.render(),
-      timeline: this.timeline.render(),
       consolePanel: this.console.render(),
       statusBar: this.statusBar.render(),
       editorCanvas: this.editorCanvas,
@@ -663,7 +655,6 @@ export class EditorApp {
       root: this.root,
       tabBar: layout.tabBar,
       bodyEl: layout.body,
-      timelinePanel: layout.timelinePanel,
       tabDefinitions: this.tabDefinitions,
       resizeViewport: () => this.resizeViewport(),
       initialTab: 'scene',
@@ -883,12 +874,11 @@ export class EditorApp {
     this.toolbar.refresh();
   }
 
-  /** Toggle panel visibility (hierarchy, inspector, timeline, console) */
-  togglePanel(panel: 'hierarchy' | 'inspector' | 'timeline' | 'console'): void {
+  /** Toggle panel visibility (hierarchy, inspector, console) */
+  togglePanel(panel: 'hierarchy' | 'inspector' | 'console'): void {
     const selectors: Record<string, string> = {
       hierarchy: '.editor-left-panel',
       inspector: '.editor-right-panel',
-      timeline: '.editor-timeline',
       console: '.editor-console',
     };
     const el = this.root.querySelector(selectors[panel]) as HTMLElement;

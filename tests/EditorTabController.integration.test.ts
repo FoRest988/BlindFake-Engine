@@ -48,7 +48,6 @@ describe('Editor layout and tabs', () => {
       toolbar: Object.assign(document.createElement('div'), { className: 'editor-toolbar' }),
       hierarchy: document.createElement('div'),
       inspector: document.createElement('div'),
-      timeline: document.createElement('div'),
       consolePanel: document.createElement('div'),
       statusBar: Object.assign(document.createElement('div'), { className: 'editor-status-bar' }),
       editorCanvas: document.createElement('canvas'),
@@ -66,7 +65,6 @@ describe('Editor layout and tabs', () => {
       root,
       tabBar: layout.tabBar,
       bodyEl: layout.body,
-      timelinePanel: layout.timelinePanel,
       tabDefinitions: definitions,
       resizeViewport,
       initialTab: 'scene',
@@ -91,7 +89,6 @@ describe('Editor layout and tabs', () => {
     expect(terrainEditor.dispose).toHaveBeenCalledOnce();
     expect(root.querySelector('.editor-tab-overlay')).toBeNull();
     expect(layout.body.style.display).toBe('');
-    expect(layout.timelinePanel.style.display).toBe('none');
     expect(resizeViewport).toHaveBeenCalledOnce();
   });
 
@@ -117,7 +114,6 @@ describe('Editor layout and tabs', () => {
       toolbar: document.createElement('div'),
       hierarchy: document.createElement('div'),
       inspector: document.createElement('div'),
-      timeline: document.createElement('div'),
       consolePanel: document.createElement('div'),
       statusBar: Object.assign(document.createElement('div'), { className: 'editor-status-bar' }),
       editorCanvas: document.createElement('canvas'),
@@ -131,7 +127,6 @@ describe('Editor layout and tabs', () => {
       root,
       tabBar: layout.tabBar,
       bodyEl: layout.body,
-      timelinePanel: layout.timelinePanel,
       tabDefinitions: definitions,
       resizeViewport: vi.fn(),
       initialTab: 'scene',
