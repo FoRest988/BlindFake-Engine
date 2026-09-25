@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { Engine } from './engine/Engine';
 import { EditorApp } from './editor/EditorApp';
-import { PhysicsSystem } from './ecs/systems/PhysicsSystem';
 import { LandingPage, type ProjectInfo } from './LandingPage';
 import { applyTemplate } from './ProjectTemplates';
 import { initDevErrorTracker, setDevErrorTrackerContext } from './engine/DevErrorTracker';
@@ -19,7 +18,7 @@ console.log(`
 
 // --- Landing Page ---
 const landingEl = document.getElementById('landing-page')!;
-initDevErrorTracker();
+if (import.meta.env.DEV) initDevErrorTracker(); // dev-only: posts to /api/dev-errors, which exists only outside production
 new LandingPage(landingEl, (project) => startProject(project));
 
 function startProject(project: ProjectInfo): void {
@@ -52,39 +51,13 @@ function startProject(project: ProjectInfo): void {
     engine.onUpdate = templateResult.updateFn;
   }
 
-  // --- HUD ---
-  const fpsEl = document.createElement('div');
-  fpsEl.className = 'hud-element hud-fps';
-  document.getElementById('ui-overlay')?.appendChild(fpsEl);
-
-  const helpEl = document.createElement('div');
-  helpEl.className = 'hud-element';
-  helpEl.style.cssText = 'bottom:8px;left:8px;font-size:0.7rem;color:#666;';
-  helpEl.innerHTML = templateResult.helpText;
-  document.getElementById('ui-overlay')?.appendChild(helpEl);
-
-  // --- Editor ---
-  const editorApp = new EditorApp(engine);
-  (editorApp as any)._currentProjectId = project.id;
-
-  // Start directly in editor mode
-  engine.editorActive = true;
-  const physicsInit = engine.world.getSystem(PhysicsSystem);
-  if (physicsInit) physicsInit.enabled = false;
-  gameContainer.style.display = 'none';
+  // --- Editor (adopts the engine canvas, puts the engine in edit mode) ---
+  const editorApp = new EditorApp(engine, { projectId: project.id });
   document.getElementById('editor-root')!.classList.remove('hidden');
-  fpsEl.style.display = 'none';
-  helpEl.style.display = 'none';
   editorApp.open();
 
-  // --- Restore saved scene data ---
-  if (project.sceneData) {
-    try {
-      const data = JSON.parse(project.sceneData);
-      // SceneSerializer restore could happen here
-      console.info('[Project] Restored scene data for:', project.name, data);
-    } catch { /* ignore corrupted data */ }
-  }
+  // Saved scene content is offered back by the per-project autosave prompt (EditorAutosaveService).
+  // A real project file with entities, scripts and assets arrives in rework F4.
 
   engine.start();
 }

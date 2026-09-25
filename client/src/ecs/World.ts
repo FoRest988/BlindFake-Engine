@@ -1,7 +1,6 @@
 import { Entity } from './Entity';
 import { System } from './System';
 import { Component, ComponentClass } from './Component';
-import { ObjectPool } from '../engine/ObjectPool';
 
 // ── Archetype cache entry ─────────────────────────────────────────────────────
 // A lightweight snapshot of matching entities for a specific component signature.
@@ -10,6 +9,8 @@ import { ObjectPool } from '../engine/ObjectPool';
 interface ArchetypeCache {
   entities: Entity[];
   dirty: boolean;
+  /** Numeric ids of the component types in this signature (see _typeKey). */
+  typeIds: Set<number>;
 }
 
 export class World {
@@ -22,17 +23,15 @@ export class World {
   private componentIndex = new Map<ComponentClass, Set<number>>();
 
   // ── Archetype query cache ───────────────────────────────────────────────────
-  // Key: sorted UUIDs of component constructors joined by '|'
+  // Key: sorted numeric type ids joined by '|' (ids are assigned per constructor,
+  // so minification and duplicate class names cannot collide).
   private archetypeCache = new Map<string, ArchetypeCache>();
 
-  // ── Component pool registry ─────────────────────────────────────────────────
-  // Systems can register a pool per component type; World will return instances
-  // to the pool when entities are removed instead of letting them be GC'd.
-  private componentPools = new Map<ComponentClass, ObjectPool<Component>>();
-
-  // ── Per-system frame timing ──────────────────────────────────────────────────
-  /** Map of system → accumulated ms this frame. Reset each update(). */
-  private systemFrameMs = new Map<System, number>();
+  // ── Per-system frame timing (double buffered) ────────────────────────────────
+  /** ms consumed by each system during the frame being updated. */
+  private currentFrameMs = new Map<System, number>();
+  /** ms consumed by each system during the last completed frame. */
+  private lastFrameMs = new Map<System, number>();
 
   private _indexAdd(entityId: number, type: ComponentClass): void {
     let set = this.componentIndex.get(type);
@@ -50,12 +49,9 @@ export class World {
   }
 
   private _invalidateCachesFor(type: ComponentClass): void {
-    for (const [key, entry] of this.archetypeCache) {
-      // Simple check: if the key string contains this type's name we mark dirty.
-      // Using the constructor's _uuid is cleaner; here we tag by index slot.
-      if (key.includes(_typeKey(type))) {
-        entry.dirty = true;
-      }
+    const id = _typeKey(type);
+    for (const entry of this.archetypeCache.values()) {
+      if (entry.typeIds.has(id)) entry.dirty = true;
     }
   }
 
@@ -65,11 +61,7 @@ export class World {
     entity._onComponentAdded = (type) => this._indexAdd(entity.id, type);
     entity._onComponentRemoved = (type, comp) => {
       this._indexRemove(entity.id, type);
-      // Return component to pool if one is registered
-      if (comp) {
-        const pool = this.componentPools.get(type);
-        pool?.release(comp);
-      }
+      comp?.dispose?.();
     };
     this.entities.set(id, entity);
     return entity;
@@ -129,7 +121,7 @@ export class World {
     const key = _archetypeKey(componentTypes);
     let entry = this.archetypeCache.get(key);
     if (!entry) {
-      entry = { entities: [], dirty: true };
+      entry = { entities: [], dirty: true, typeIds: new Set(componentTypes.map(_typeKey)) };
       this.archetypeCache.set(key, entry);
     }
     if (entry.dirty) {
@@ -137,38 +129,6 @@ export class World {
       entry.dirty = false;
     }
     return entry.entities;
-  }
-
-  /**
-   * Register an ObjectPool for a component type.
-   * When entities are removed the world will `release()` their pooled components
-   * back to the pool rather than letting them be GC'd.
-   *
-   * @example
-   *   const pool = new ObjectPool<PhysicsBodyComponent>({
-   *     create: () => new PhysicsBodyComponent(),
-   *     reset:  c  => { c.bodyId = -1; },
-   *   });
-   *   world.registerComponentPool(PhysicsBodyComponent, pool);
-   *
-   *   // Acquire from pool instead of `new`:
-   *   const body = world.acquireComponent(PhysicsBodyComponent);
-   *   entity.add(body);
-   */
-  registerComponentPool<T extends Component>(
-    type: ComponentClass<T>,
-    pool: ObjectPool<T>,
-  ): void {
-    this.componentPools.set(type, pool as unknown as ObjectPool<Component>);
-  }
-
-  /**
-   * Acquire a component instance from its registered pool (or create with `new`
-   * if no pool is registered or pool is empty).
-   */
-  acquireComponent<T extends Component>(type: ComponentClass<T>): T {
-    const pool = this.componentPools.get(type) as ObjectPool<T> | undefined;
-    return (pool ? pool.acquire() : null) ?? new type();
   }
 
   addSystem(system: System): void {
@@ -190,12 +150,13 @@ export class World {
     }
   }
 
-  update(delta: number, elapsed: number): void {
+  update(delta: number, elapsed: number, mode: 'edit' | 'play' = 'play'): void {
     // Remove queued entities
     for (const id of this.entitiesToRemove) {
       const entity = this.entities.get(id);
       if (entity) {
-        // Clean component index before dispose clears the internal map
+        // Release component resources and clean the index before dispose clears the internal map
+        for (const comp of entity.getAll()) comp.dispose?.();
         for (const type of entity.getComponentTypes()) {
           this._indexRemove(id, type);
         }
@@ -205,28 +166,25 @@ export class World {
     }
     this.entitiesToRemove.length = 0;
 
-    // Update all systems — enforce per-system tick budget when set
+    // Update all systems, timing each one
+    this.currentFrameMs.clear();
     for (const system of this.systems) {
       if (!system.enabled) continue;
-
-      if (system.tickBudgetMs > 0) {
-        const start = performance.now();
-        system.update(delta, elapsed);
-        const elapsed_ms = performance.now() - start;
-        const prev = this.systemFrameMs.get(system) ?? 0;
-        this.systemFrameMs.set(system, prev + elapsed_ms);
-      } else {
-        system.update(delta, elapsed);
-      }
+      if (mode === 'edit' && !system.runsInEditMode) continue;
+      const start = performance.now();
+      system.update(delta, elapsed);
+      this.currentFrameMs.set(system, performance.now() - start);
     }
 
-    // Reset per-frame timing
-    this.systemFrameMs.clear();
+    // Swap timing buffers so getSystemTimings() reports the frame that just finished
+    const finished = this.currentFrameMs;
+    this.currentFrameMs = this.lastFrameMs;
+    this.lastFrameMs = finished;
   }
 
-  /** Per-frame ms consumed by each system last frame. */
-  getSystemTimings(): Map<System, number> {
-    return new Map(this.systemFrameMs);
+  /** Milliseconds consumed by each system during the last completed frame. */
+  getSystemTimings(): ReadonlyMap<System, number> {
+    return this.lastFrameMs;
   }
 
   /** All registered systems in priority order. */
@@ -245,6 +203,7 @@ export class World {
 
   clear(): void {
     for (const entity of this.entities.values()) {
+      for (const comp of entity.getAll()) comp.dispose?.();
       entity.dispose();
     }
     this.entities.clear();
@@ -256,12 +215,20 @@ export class World {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Stable string key for a single ComponentClass, derived from its name. */
-function _typeKey(type: ComponentClass): string {
-  return type.name;
+const typeIds = new WeakMap<ComponentClass, number>();
+let nextTypeId = 1;
+
+/** Stable numeric id for a ComponentClass (assigned on first use; survives minification). */
+function _typeKey(type: ComponentClass): number {
+  let id = typeIds.get(type);
+  if (id === undefined) {
+    id = nextTypeId++;
+    typeIds.set(type, id);
+  }
+  return id;
 }
 
 /** Stable cache key for a component-type signature (order-independent). */
 function _archetypeKey(types: ComponentClass[]): string {
-  return types.map(_typeKey).sort().join('|');
+  return types.map(_typeKey).sort((a, b) => a - b).join('|');
 }

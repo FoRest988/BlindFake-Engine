@@ -7,6 +7,8 @@ export class EngineSystemsPanel {
   private editor: EditorApp;
   private container: HTMLElement;
   private _renderContent: (() => void) | null = null;
+  /** Timers/observers owned by the currently rendered section; run before it is replaced. */
+  private _sectionCleanups: Array<() => void> = [];
 
   // Spline drawing state
   private _drawingSpline = false;
@@ -28,7 +30,17 @@ export class EngineSystemsPanel {
     if (this._renderContent) this._renderContent();
   }
 
+  private runSectionCleanups(): void {
+    for (const fn of this._sectionCleanups.splice(0)) fn();
+  }
+
+  /** Stop timers and observers owned by the rendered section. */
+  dispose(): void {
+    this.runSectionCleanups();
+  }
+
   render(): HTMLElement {
+    this.runSectionCleanups();
     this.container.innerHTML = '';
 
     // Sidebar with system list
@@ -44,7 +56,6 @@ export class EngineSystemsPanel {
       { id: 'audio', icon: '🔊', label: 'Audio' },
       { id: 'lod', icon: '🔍', label: 'LOD System' },
       { id: 'splines', icon: '➰', label: 'Spline Paths' },
-      { id: 'plugins', icon: '🔌', label: 'Plugins' },
       { id: 'ecsystems', icon: '🧩', label: 'ECS Systems' },
     ];
 
@@ -70,6 +81,7 @@ export class EngineSystemsPanel {
     };
 
     const renderContent = () => {
+      this.runSectionCleanups();
       content.innerHTML = '';
       switch (activeSystem) {
         case 'weather': this.renderWeather(content); break;
@@ -80,7 +92,6 @@ export class EngineSystemsPanel {
         case 'audio': this.renderAudio(content); break;
         case 'lod': this.renderLOD(content); break;
         case 'splines': this.renderSplines(content); break;
-        case 'plugins': this.renderPlugins(content); break;
         case 'ecsystems': this.renderEcSystems(content); break;
       }
     };
@@ -1372,57 +1383,6 @@ export class EngineSystemsPanel {
     this.refresh();
   }
 
-  // ── Plugins ──
-  private renderPlugins(parent: HTMLElement): void {
-    const plugins = this.editor.engine.plugins;
-
-    const header = document.createElement('div');
-    header.style.cssText = 'font-size:18px;font-weight:600;color:#e0e0e0;margin-bottom:4px;';
-    header.textContent = '🔌 Plugin System';
-    parent.appendChild(header);
-    const desc = document.createElement('div');
-    desc.style.cssText = 'font-size:11px;color:#888;margin-bottom:12px;';
-    desc.textContent = 'Manage loaded plugins and extensions.';
-    parent.appendChild(desc);
-
-    const listSec = this.section(parent, 'Loaded Plugins');
-    const pluginList = plugins.listPlugins();
-    if (pluginList.length > 0) {
-      for (const p of pluginList) {
-        const r = document.createElement('div');
-        r.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#ccc;';
-        const status = p.active ? '🟢' : '🔴';
-        r.innerHTML = `<span>${status}</span> <span style="flex:1;">${p.name} <span style="color:#666;font-size:10px;">v${p.version ?? '?'}</span></span>`;
-
-        const toggleBtn = document.createElement('button');
-        toggleBtn.textContent = p.active ? 'Deactivate' : 'Activate';
-        toggleBtn.style.cssText = 'background:#333;border:1px solid #555;color:#ccc;cursor:pointer;padding:2px 8px;border-radius:3px;font-size:11px;';
-        toggleBtn.addEventListener('click', async () => {
-          if (p.active) {
-            plugins.deactivate(p.id);
-          } else {
-            await plugins.activate(p.id);
-          }
-          parent.innerHTML = '';
-          this.renderPlugins(parent);
-        });
-        r.appendChild(toggleBtn);
-        listSec.appendChild(r);
-      }
-    } else {
-      const empty = document.createElement('div');
-      empty.style.cssText = 'font-size:11px;color:#666;padding:8px 0;';
-      empty.textContent = 'No plugins loaded';
-      listSec.appendChild(empty);
-    }
-
-    const loadSec = this.section(parent, 'Register Plugin');
-    const infoText = document.createElement('div');
-    infoText.style.cssText = 'font-size:11px;color:#888;';
-    infoText.textContent = 'Plugins can be registered programmatically via engine.plugins.register(plugin).';
-    loadSec.appendChild(infoText);
-  }
-
   // ── ECS Systems ──────────────────────────────────────────────────────────────
 
   /** Render the live ECS system list with enable/disable toggles and last-frame timings. */
@@ -1452,7 +1412,6 @@ export class EngineSystemsPanel {
         <tr style="border-bottom:1px solid #444;color:#888;">
           <th style="text-align:left;padding:4px 6px;font-weight:500;">System</th>
           <th style="text-align:right;padding:4px 6px;font-weight:500;">Priority</th>
-          <th style="text-align:right;padding:4px 6px;font-weight:500;">Budget (ms)</th>
           <th style="text-align:right;padding:4px 6px;font-weight:500;">Last (ms)</th>
           <th style="text-align:center;padding:4px 6px;font-weight:500;">Enabled</th>
         </tr>
@@ -1477,11 +1436,6 @@ export class EngineSystemsPanel {
       tdPri.style.cssText = 'padding:5px 6px;text-align:right;color:#888;';
       tdPri.textContent = String(system.priority);
 
-      // Budget
-      const tdBudget = document.createElement('td');
-      tdBudget.style.cssText = 'padding:5px 6px;text-align:right;color:#888;';
-      tdBudget.textContent = system.tickBudgetMs > 0 ? system.tickBudgetMs.toFixed(1) : '—';
-
       // Last frame time (polled)
       const tdLast = document.createElement('td');
       tdLast.style.cssText = 'padding:5px 6px;text-align:right;color:#888;font-family:monospace;';
@@ -1501,7 +1455,7 @@ export class EngineSystemsPanel {
       });
       tdEnabled.appendChild(toggle);
 
-      tr.append(tdName, tdPri, tdBudget, tdLast, tdEnabled);
+      tr.append(tdName, tdPri, tdLast, tdEnabled);
       tbody.appendChild(tr);
     }
 
@@ -1517,16 +1471,13 @@ export class EngineSystemsPanel {
       const visible = entries[0]?.isIntersecting ?? false;
       if (visible && !pollTimer) {
         pollTimer = setInterval(() => {
-          // getSystemTimings() returns last-frame ms; sample each interval
-          // If tickBudgetMs=0 the system isn't instrumented, so show '—'
+          // getSystemTimings() returns the ms each system took in the last completed frame
+          const timings = world.getSystemTimings();
           for (const [sys, cell] of timingCells) {
-            const s = sys as import('../../ecs/System').System;
-            if (s.tickBudgetMs > 0) {
-              const timings = world.getSystemTimings();
-              const ms = timings.get(s) ?? 0;
-              cell.textContent = ms > 0 ? ms.toFixed(2) : '< 0.01';
-              cell.style.color = ms > s.tickBudgetMs ? '#f88' : '#8f8';
-            }
+            const ms = timings.get(sys as import('../../ecs/System').System);
+            if (ms === undefined) { cell.textContent = '—'; cell.style.color = '#555'; continue; }
+            cell.textContent = ms >= 0.01 ? ms.toFixed(2) : '< 0.01';
+            cell.style.color = ms > 4 ? '#f88' : '#8f8';
           }
         }, POLL_MS);
       } else if (!visible && pollTimer) {
@@ -1538,11 +1489,11 @@ export class EngineSystemsPanel {
     // Observe the table to start/stop polling when the tab becomes visible
     observer.observe(table);
 
-    // Clean up on re-render (panel detach)
-    const cleanup = () => {
+    // Clean up when the section is replaced or the panel is disposed
+    // (the deprecated mutation event used before no longer fires in current Chromium).
+    this._sectionCleanups.push(() => {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
       observer.disconnect();
-    };
-    parent.addEventListener('DOMNodeRemoved', cleanup, { once: true });
+    });
   }
 }

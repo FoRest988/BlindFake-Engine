@@ -3,7 +3,6 @@ import { Entity } from '../client/src/ecs/Entity';
 import { Component } from '../client/src/ecs/Component';
 import { World } from '../client/src/ecs/World';
 import { System } from '../client/src/ecs/System';
-import { ObjectPool } from '../client/src/engine/ObjectPool';
 
 // Test components
 class PositionComponent extends Component {
@@ -313,83 +312,39 @@ describe('World.queryWithCache (archetype cache)', () => {
   });
 });
 
-describe('World component pooling (Phase 5)', () => {
-  class TagComponent extends Component {
-    tag = '';
-  }
-
-  it('acquireComponent falls back to new when no pool is registered', () => {
-    const world = new World();
-    const c = world.acquireComponent(TagComponent);
-    expect(c).toBeInstanceOf(TagComponent);
-  });
-
-  it('acquireComponent returns pool instances', () => {
-    const world = new World();
-    const pool = new ObjectPool<TagComponent>({
-      create: () => new TagComponent(),
-      reset: (c) => { c.tag = ''; },
-      initialSize: 2,
-    });
-    world.registerComponentPool(TagComponent, pool);
-
-    const c = world.acquireComponent(TagComponent);
-    expect(c).toBeInstanceOf(TagComponent);
-    // Pool size should have decreased by 1 (was pre-allocated)
-    expect(pool.availableCount).toBe(1);
-  });
-
-  it('releasing an entity returns component to pool', () => {
-    const world = new World();
-    const pool = new ObjectPool<TagComponent>({
-      create: () => new TagComponent(),
-      reset: (c) => { c.tag = ''; },
-      initialSize: 0,
-    });
-    world.registerComponentPool(TagComponent, pool);
-
-    const entity = world.createEntity();
-    const comp = world.acquireComponent(TagComponent);
-    comp.tag = 'hero';
-    entity.add(comp);
-
-    expect(pool.availableCount).toBe(0);
-
-    entity.remove(TagComponent);
-
-    expect(pool.availableCount).toBe(1);
-    // tag should be reset by the pool's reset fn
-    const recycled = pool.acquire()!;
-    expect(recycled.tag).toBe('');
-  });
-});
-
-describe('System.tickBudgetMs (Phase 5)', () => {
-  it('system with 0 budget runs normally', () => {
-    let ran = false;
-    class QuickSystem extends System {
-      tickBudgetMs = 0;
-      update() { ran = true; }
+describe('World.getSystemTimings', () => {
+  it('reports the milliseconds each system took in the last completed frame', () => {
+    class BusySystem extends System {
+      update() { const end = performance.now() + 2; while (performance.now() < end) { /* spin */ } }
+    }
+    class IdleSystem extends System {
+      update() {}
     }
     const world = new World();
-    world.addSystem(new QuickSystem());
-    world.update(0.016, 0);
-    expect(ran).toBe(true);
-  });
-
-  it('system with budget is still called and getSystemTimings records it', () => {
-    let ran = false;
-    class BudgetedSystem extends System {
-      tickBudgetMs = 16; // 16ms budget
-      update() { ran = true; }
-    }
-    const world = new World();
-    const sys = new BudgetedSystem();
-    world.addSystem(sys);
-    world.update(0.016, 0);
-    expect(ran).toBe(true);
-    // Timings are reset after update, so they should be empty
+    const busy = new BusySystem();
+    const idle = new IdleSystem();
+    world.addSystem(busy);
+    world.addSystem(idle);
     expect(world.getSystemTimings().size).toBe(0);
+
+    world.update(0.016, 0);
+
+    const timings = world.getSystemTimings();
+    expect(timings.get(busy)!).toBeGreaterThanOrEqual(1.5);
+    expect(timings.get(idle)!).toBeLessThan(1);
+  });
+
+  it('skips systems not flagged runsInEditMode while in edit mode', () => {
+    const calls: string[] = [];
+    class GameplaySystem extends System { update() { calls.push('gameplay'); } }
+    class SyncSystem extends System { override runsInEditMode = true; update() { calls.push('sync'); } }
+    const world = new World();
+    world.addSystem(new GameplaySystem());
+    world.addSystem(new SyncSystem());
+    world.update(0.016, 0, 'edit');
+    expect(calls).toEqual(['sync']);
+    world.update(0.016, 0, 'play');
+    expect(calls).toEqual(['sync', 'gameplay', 'sync']);
   });
 });
 

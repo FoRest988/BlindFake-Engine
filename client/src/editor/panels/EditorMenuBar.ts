@@ -1,6 +1,5 @@
 import type { EditorApp } from '../EditorApp';
 import { SceneSerializer } from '../../engine/SceneSerialization';
-import { GameExporter } from '../../engine/GameExporter';
 
 /**
  * EditorMenuBar — Full menu bar with File, Edit, View, Add, Window, Help menus.
@@ -121,15 +120,9 @@ export class EditorMenuBar {
       { label: 'Save Scene', shortcut: 'Ctrl+S', action: () => this.saveScene() },
       { label: 'Load Scene...', shortcut: 'Ctrl+O', action: () => this.loadScene() },
       { separator: true },
-      { label: 'Import Model...', action: () => this.editor.addModel() },
-      { label: 'Export Scene JSON', action: () => this.saveScene() },
-      { label: '🚀 Export Game (HTML)', shortcut: 'Ctrl+E', action: () => this.exportGameHTML() },
-      { label: '� Export Game (ZIP Folder)', action: () => this.exportGameFolder() },
-      { label: '�📦 Export Scene JSON', action: () => this.exportSceneJSON() },
+      { label: '📦 Import Model...', action: () => this.editor.addModel() },
       { separator: true },
       { label: 'Preferences...', action: () => this.editor.preferences.toggle() },
-      { separator: true },
-      { label: 'Exit to Game', shortcut: 'F9', action: () => this.editor.close() },
     ];
   }
 
@@ -182,11 +175,11 @@ export class EditorMenuBar {
       { separator: true },
       { label: '📷 Camera', action: () => this.editor.addCamera() },
       { separator: true },
-      { label: '�️ Movement Path', action: () => this.editor.addSplinePath('movement') },
+      { label: '🛤️ Movement Path', action: () => this.editor.addSplinePath('movement') },
       { label: '🧱 Collision Wall', action: () => this.editor.addSplinePath('collision') },
       { label: '🎥 Camera Path', action: () => this.editor.addSplinePath('camera') },
       { separator: true },
-      { label: '�📦 Import Model...', action: () => this.editor.addModel() },
+      { label: '📦 Import Model...', action: () => this.editor.addModel() },
     ];
   }
 
@@ -194,10 +187,8 @@ export class EditorMenuBar {
     return [
       { label: 'Hierarchy', action: () => this.editor.togglePanel('hierarchy') },
       { label: 'Inspector', action: () => this.editor.togglePanel('inspector') },
-      { label: 'Timeline', action: () => this.editor.togglePanel('timeline') },
       { label: 'Console', action: () => this.editor.togglePanel('console') },
       { separator: true },
-      { label: 'Asset Browser', action: () => this.editor.switchTab('scene') },
       { label: 'Visual Script Editor', action: () => this.editor.switchTab('blueprints') },
       { label: '🔨 Modeling & Rigging', action: () => this.editor.switchTab('modeling') },
       { label: '⚙️ Engine Systems', action: () => this.editor.toggleEngineSystems() },
@@ -233,57 +224,12 @@ export class EditorMenuBar {
     }
   }
 
-  private async exportGameHTML(): Promise<void> {
-    const scene = this.editor.engine.scenes.active;
-    if (!scene) return;
-    this.editor.statusBar.setMessage('Exporting game...');
-    const blob = await GameExporter.exportAsHTML(scene, {
-      projectName: 'BlindFake: Phantom Game',
-      fullscreen: true,
-      shadows: true,
-      antialias: true,
-      showLoading: true,
-    });
-    GameExporter.download(blob, 'game.html');
-    this.editor.statusBar.setMessage('Game exported!');
-  }
-
-  private async exportGameFolder(): Promise<void> {
-    const scene = this.editor.engine.scenes.active;
-    if (!scene) return;
-    this.editor.statusBar.setMessage('Exporting game folder...');
-    const blob = await GameExporter.exportAsFolder(scene, {
-      projectName: 'BlindFake: Phantom Game',
-      fullscreen: true,
-      shadows: true,
-      antialias: true,
-      showLoading: true,
-    });
-    GameExporter.download(blob, 'game.zip');
-    this.editor.statusBar.setMessage('Game folder exported as ZIP!');
-  }
-
-  private exportSceneJSON(): void {
-    const scene = this.editor.engine.scenes.active;
-    if (!scene) return;
-    const blob = GameExporter.exportAsJSON(scene);
-    GameExporter.download(blob, 'scene.json');
-    this.editor.statusBar.setMessage('Scene JSON exported!');
-  }
-
   private async loadScene(): Promise<void> {
     const scene = this.editor.engine.scenes.active;
     if (!scene) return;
     const data = await SceneSerializer.importFromFile();
     if (data) {
-      const loaded = SceneSerializer.deserialize(data);
-      const toRemove = scene.children.filter(c => !c.userData.__editorHelper);
-      toRemove.forEach(c => scene.remove(c));
-      while (loaded.children.length > 0) {
-        scene.add(loaded.children[0]);
-      }
-      this.editor.select(null);
-      this.editor.hierarchy.refresh();
+      this.editor.replaceSceneContent(data);
       this.editor.statusBar.setMessage('Scene loaded');
     }
   }

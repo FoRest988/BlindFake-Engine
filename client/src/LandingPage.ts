@@ -3,7 +3,7 @@
  * Manages recent projects list, new project creation (3D/2D), and project opening.
  */
 
-export type ProjectTemplate = '3d' | '2d' | 'platformer3d' | 'fps' | 'topdown2d' | 'mainmenu' | 'fighting' | 'racing' | 'puzzle';
+export type ProjectTemplate = '3d' | '2d' | 'platformer3d';
 
 export interface ProjectInfo {
   id: string;
@@ -178,48 +178,6 @@ export class LandingPage {
                   <div class="lp-template-label">Platformer 3D</div>
                   <div class="lp-template-desc">Player, platforms, 3rd-person camera, and physics</div>
                 </div>
-                <div class="lp-template-card" data-template="fps">
-                  <div class="lp-template-preview lp-template-3d">
-                    <div class="lp-cube" style="background:#e74c3c"></div>
-                  </div>
-                  <div class="lp-template-label">FPS</div>
-                  <div class="lp-template-desc">First-person camera, arena, shooting mechanics</div>
-                </div>
-                <div class="lp-template-card" data-template="topdown2d">
-                  <div class="lp-template-preview lp-template-2d">
-                    <div class="lp-sprite" style="background:#3498db"></div>
-                  </div>
-                  <div class="lp-template-label">Top-Down 2D</div>
-                  <div class="lp-template-desc">2D player, tilemap, enemies, top-down camera</div>
-                </div>
-                <div class="lp-template-card" data-template="mainmenu">
-                  <div class="lp-template-preview lp-template-3d">
-                    <div class="lp-cube" style="background:#9b59b6"></div>
-                  </div>
-                  <div class="lp-template-label">Main Menu</div>
-                  <div class="lp-template-desc">Animated 3D background with UI menu system</div>
-                </div>
-                <div class="lp-template-card" data-template="fighting">
-                  <div class="lp-template-preview lp-template-3d">
-                    <div class="lp-cube" style="background:#e67e22"></div>
-                  </div>
-                  <div class="lp-template-label">Fighting</div>
-                  <div class="lp-template-desc">3D arena fighter with Stand system, health bars, combos</div>
-                </div>
-                <div class="lp-template-card" data-template="racing">
-                  <div class="lp-template-preview lp-template-3d">
-                    <div class="lp-cube" style="background:#f1c40f"></div>
-                  </div>
-                  <div class="lp-template-label">Racing</div>
-                  <div class="lp-template-desc">Vehicle physics, track, lap timer, drift controls</div>
-                </div>
-                <div class="lp-template-card" data-template="puzzle">
-                  <div class="lp-template-preview lp-template-3d">
-                    <div class="lp-cube" style="background:#1abc9c"></div>
-                  </div>
-                  <div class="lp-template-label">Puzzle / Adventure</div>
-                  <div class="lp-template-desc">3rd-person exploration, inventory, dialogue, puzzle triggers</div>
-                </div>
               </div>
             </div>
             <div class="lp-modal-actions">
@@ -274,12 +232,6 @@ export class LandingPage {
   private templateIcon(t: ProjectTemplate): string {
     switch (t) {
       case 'platformer3d': return '🏃';
-      case 'fps': return '🔫';
-      case 'topdown2d': return '🗡️';
-      case 'fighting': return '👊';
-      case 'racing': return '🏎️';
-      case 'puzzle': return '🧩';
-      case 'mainmenu': return '🎬';
       case '2d': return '🕹️';
       default: return '🎮';
     }
@@ -288,12 +240,6 @@ export class LandingPage {
   private templateBadge(t: ProjectTemplate): string {
     switch (t) {
       case 'platformer3d': return 'PLATFORMER';
-      case 'fps': return 'FPS';
-      case 'topdown2d': return 'TOP-DOWN';
-      case 'fighting': return 'FIGHTING';
-      case 'racing': return 'RACING';
-      case 'puzzle': return 'PUZZLE';
-      case 'mainmenu': return 'MENU';
       default: return t.toUpperCase();
     }
   }

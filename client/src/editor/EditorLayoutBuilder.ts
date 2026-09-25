@@ -6,7 +6,6 @@ export interface EditorLayoutBuilderArgs {
   toolbar: HTMLElement;
   hierarchy: HTMLElement;
   inspector: HTMLElement;
-  timeline: HTMLElement;
   consolePanel: HTMLElement;
   statusBar: HTMLElement;
   editorCanvas: HTMLCanvasElement;
@@ -20,7 +19,6 @@ export interface EditorLayoutBuilderArgs {
 export interface EditorLayoutRefs {
   tabBar: HTMLElement;
   body: HTMLElement;
-  timelinePanel: HTMLElement;
   viewportContainer: HTMLElement;
 }
 
@@ -65,11 +63,6 @@ export function buildEditorLayout(args: EditorLayoutBuilderArgs): EditorLayoutRe
   consolePanel.appendChild(args.consolePanel);
   center.appendChild(consolePanel);
 
-  // Keep timeline container for tab/layout compatibility, but hide it in scene mode.
-  const timelinePanel = document.createElement('div');
-  timelinePanel.className = 'editor-timeline';
-  timelinePanel.style.display = 'none';
-  center.appendChild(timelinePanel);
   body.appendChild(center);
 
   const rightPanel = document.createElement('div');
@@ -84,7 +77,6 @@ export function buildEditorLayout(args: EditorLayoutBuilderArgs): EditorLayoutRe
   return {
     tabBar,
     body,
-    timelinePanel,
     viewportContainer,
   };
 }

@@ -10,9 +10,9 @@ import { PhysicsSystem } from '../ecs/systems/PhysicsSystem';
 import { AnimationSystem } from '../ecs/systems/AnimationSystem';
 import { AISystem } from '../ecs/systems/AISystem';
 import { CharacterControllerSystem } from '../ecs/systems/CharacterControllerSystem';
-import { NetworkManager } from '../network/NetworkManager';
-import { RapierPhysicsEngine } from './RapierPhysics';
+import { RapierPhysicsEngine } from '../modules/physics/RapierPhysics';
 import { MaterialLibrary } from './MaterialLibrary';
+import { MAX_FRAME_DT } from './loop/GameLoop';
 
 // New engine subsystems
 import { AudioManager } from './AudioManager';
@@ -31,7 +31,6 @@ import { PoolManager } from './ObjectPool';
 import { SceneTransition } from './SceneTransition';
 import { CameraEffects } from './CameraEffects';
 import { Localization } from './Localization';
-import { createRenderer, rendererCapabilities, type RendererCapabilities } from './WebGPURenderer';
 
 // Extended subsystems
 import { LODSystem } from './LODSystem';
@@ -39,22 +38,13 @@ import { BillboardManager } from './BillboardSystem';
 import { DecalSystem } from './DecalSystem';
 import { InstancedRenderer } from './InstancedRenderer';
 import { WeatherSystem } from './WeatherSystem';
-import { Profiler } from './Profiler';
-import { WorkerManager } from './WorkerManager';
-import { HotReloadSystem } from './HotReload';
-import { AssetPipeline } from './AssetPipeline';
-import { AssetDependencyGraph, StreamingAssetLoader } from './AssetDependencyGraph';
-import { PluginSystem } from './PluginSystem';
 import { SkySystem } from './SkySystem';
 import { NavMesh, NavMeshDebugDraw } from './NavMeshSystem';
 import { IKSystem } from './IKSystem';
-import { OcclusionCullingManager } from './OcclusionCulling';
-import { LightProbeSystem } from './LightProbeSystem';
 import { RagdollSystem } from './RagdollSystem';
 import { ClothSimulation } from './ClothSimulation';
 import { FogSystem } from './FogSystem';
 import { TrailManager } from './TrailRenderer';
-import { SplineManager } from './SplineSystem';
 import { MinimapSystem } from './MinimapSystem';
 import { BehaviorTreeManager } from '../gameplay/BehaviorTree';
 import { SpawnManager, WaveSystem } from '../gameplay/SpawnSystem';
@@ -64,12 +54,13 @@ import { AchievementSystem } from '../gameplay/AchievementSystem';
 import { PerformanceManager, RenderStatsOverlay } from './PerformanceManager';
 import { DamagePopupSystem } from '../gameplay/DamagePopup';
 
+export type EngineMode = 'edit' | 'play';
+
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
   antialias?: boolean;
   shadows?: boolean;
   pixelRatio?: number;
-  serverUrl?: string;
 }
 
 export class Engine {
@@ -81,7 +72,6 @@ export class Engine {
   public cinematics: CinematicEngine;
   public particles: ParticleSystem;
   public world: World;
-  public network: NetworkManager;
 
   // ── New Subsystems ──────────────────────────────────────────────
   public audio: AudioManager;
@@ -108,13 +98,6 @@ export class Engine {
   public decals: DecalSystem;
   public instancing: InstancedRenderer;
   public weather: WeatherSystem;
-  public profiler: Profiler;
-  public workers: WorkerManager;
-  public hotReload: HotReloadSystem;
-  public assetPipeline: AssetPipeline;
-  public assetGraph: AssetDependencyGraph;
-  public streaming: StreamingAssetLoader;
-  public plugins: PluginSystem;
   public sky!: SkySystem;
   public materialLibrary: MaterialLibrary;
 
@@ -122,15 +105,12 @@ export class Engine {
   public navMesh: NavMesh;
   public navMeshDebug: NavMeshDebugDraw | null = null;
   public ik: IKSystem;
-  public culling: OcclusionCullingManager;
-  public lightProbes: LightProbeSystem;
   public ragdoll: RagdollSystem | null = null;  // Initialized when Rapier is ready
   public clothSims: ClothSimulation[] = [];
 
   // New gameplay & rendering systems
   public fog!: FogSystem;
   public trails!: TrailManager;
-  public splines!: SplineManager;
   public minimap: MinimapSystem | null = null;
   public behaviorTrees: BehaviorTreeManager;
   public spawns: SpawnManager;
@@ -153,14 +133,23 @@ export class Engine {
   /** User-defined callback that runs each frame before rendering */
   public onUpdate: ((delta: number, elapsed: number) => void) | null = null;
 
-  /** When true, the editor is active — ECS physics/game systems are paused */
-  public editorActive = false;
+  /**
+   * 'play': full simulation. 'edit': only systems flagged `runsInEditMode`
+   * (transform sync) tick, and runtime systems (physics, AI, tweens, ...) pause.
+   */
+  public mode: EngineMode = 'play';
+
+  /** Hooks run once per frame after the ECS and runtime updates, before rendering. */
+  private readonly frameHooks = new Set<(delta: number, elapsed: number) => void>();
+
+  /** When set, replaces the default render of the active scene (the editor uses it). */
+  public renderOverride: ((delta: number) => void) | null = null;
+
+  /** When true the renderer follows the window size; the editor turns this off and calls setViewportSize(). */
+  public autoResize = true;
 
   /** The active viewport canvas — set by EditorApp so templates use the correct canvas for pointer lock / mouse events */
   public viewportCanvas: HTMLCanvasElement | null = null;
-
-  /** Renderer backend capabilities — populated after initWebGPU() or defaults to WebGL. */
-  public rendererCapabilities: RendererCapabilities = rendererCapabilities;
 
   constructor(config: EngineConfig) {
     // Renderer — upgraded with Babylon.js-inspired quality defaults
@@ -168,7 +157,6 @@ export class Engine {
       canvas: config.canvas,
       antialias: config.antialias ?? true,
       powerPreference: 'high-performance',
-      logarithmicDepthBuffer: true,   // eliminates z-fighting at distance
       stencil: false,                 // saves VRAM (re-enable if needed)
     });
     this.renderer.setPixelRatio(config.pixelRatio ?? Math.min(window.devicePixelRatio, 2));
@@ -199,7 +187,6 @@ export class Engine {
     this.scenes = new SceneManager();
     this.cinematics = new CinematicEngine(this);
     this.particles = new ParticleSystem();
-    this.network = new NetworkManager(config.serverUrl ?? 'ws://localhost:4000/ws');
 
     // ECS World
     this.world = new World();
@@ -234,20 +221,11 @@ export class Engine {
     this.decals = new DecalSystem();
     this.instancing = new InstancedRenderer();
     this.weather = new WeatherSystem();
-    this.profiler = new Profiler();
-    this.workers = new WorkerManager();
-    this.hotReload = new HotReloadSystem();
-    this.assetPipeline = new AssetPipeline();
-    this.assetGraph = new AssetDependencyGraph();
-    this.streaming = new StreamingAssetLoader();
-    this.plugins = new PluginSystem(this);
     this.materialLibrary = new MaterialLibrary();
 
     // Advanced systems
     this.navMesh = new NavMesh();
     this.ik = new IKSystem();
-    this.culling = new OcclusionCullingManager();
-    this.lightProbes = new LightProbeSystem();
 
     // Gameplay systems
     this.behaviorTrees = new BehaviorTreeManager();
@@ -267,7 +245,10 @@ export class Engine {
     this.events.on('terrain:applied', () => this.physicsSystem.markTerrainDirty());
 
     // Initialize Rapier WASM (async, physics starts when ready)
-    this.physicsSystem.initRapier();
+    this.physicsSystem.initRapier().catch((err: unknown) => {
+      console.error('[Engine] Physics initialisation failed:', err);
+      this.events.emit('physics:error', err);
+    });
     // Forward raw Rapier contact events onto the shared EventBus
     this.physicsSystem.rapier.onContact = (event) => {
       this.events.emit('physics:collision', event);
@@ -277,38 +258,30 @@ export class Engine {
   /** Access the Rapier physics engine for raycasts, forces, joints etc. */
   get physics(): RapierPhysicsEngine { return this.physicsSystem.rapier; }
 
-  /**
-   * Attempt to upgrade the active renderer to WebGPU.
-   * Call *before* `engine.start()` for best results.
-   *
-   * @returns `true` if WebGPU was activated; `false` if WebGL is in use.
-   *
-   * @example
-   *   const engine = new Engine(config);
-   *   await engine.initWebGPU();
-   *   engine.start();
-   */
-  async initWebGPU(): Promise<boolean> {
-    const current = this.renderer.domElement;
-    const { renderer, capabilities } = await createRenderer({
-      canvas: current,
-      antialias: true,
-      powerPreference: 'high-performance',
-      logarithmicDepthBuffer: true,
-      stencil: false,
-    });
-
-    if (capabilities.isWebGPU) {
-      this.renderer.dispose();
-      this.renderer = renderer;
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      this.renderer.setSize(current.clientWidth || window.innerWidth, current.clientHeight || window.innerHeight);
-      // Re-apply post-processing if it was initialised with the old renderer
-      this.postProcessing.setRenderer(renderer);
+  /** Switch between editing (simulation paused) and playing (full simulation). */
+  setMode(mode: EngineMode): void {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    if (typeof document !== 'undefined') {
+      document.body.classList.toggle('bf-mode-edit', mode === 'edit');
+      document.body.classList.toggle('bf-mode-play', mode === 'play');
     }
+    this.events.emit('engine:mode', mode);
+  }
 
-    this.rendererCapabilities = capabilities;
-    return capabilities.isWebGPU;
+  /** Register a per-frame hook; returns a function that removes it. */
+  addFrameHook(hook: (delta: number, elapsed: number) => void): () => void {
+    this.frameHooks.add(hook);
+    return () => { this.frameHooks.delete(hook); };
+  }
+
+  /** Resize the renderer, the default camera and the post-processing targets to a viewport. */
+  setViewportSize(width: number, height: number): void {
+    if (width <= 0 || height <= 0) return;
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+    this.postProcessing.resize(width, height);
   }
 
   /**
@@ -338,29 +311,38 @@ export class Engine {
     if (!this.running) return;
     this.animFrameId = requestAnimationFrame(this.loop);
 
-    this.performance.frameStart();
-    const delta = Math.min(this.clock.getDelta(), 0.1); // Cap delta to prevent spiral
+    const delta = Math.min(this.clock.getDelta(), MAX_FRAME_DT);
     const elapsed = this.clock.elapsedTime;
-    const activeScene = this.scenes.active;
-
     this.updateFpsCounter();
+    this.tick(delta, elapsed);
+    this.render(delta);
+  };
+
+  /** Advance the simulation by one frame without rendering (usable headless). */
+  tick(delta: number, elapsed: number): void {
+    this.performance.frameStart();
+    const activeScene = this.scenes.active;
     this.prepareActiveScene(activeScene);
-    this.world.update(delta, elapsed);
-    if (!this.editorActive) this.updateRuntimeSystems(delta);
+    this.world.update(delta, elapsed, this.mode);
+    if (this.mode === 'play') this.updateRuntimeSystems(delta);
     this.updateAlwaysOnSystems(delta);
 
     // User game logic callback (runs before render, after ECS)
     if (this.onUpdate) {
       this.onUpdate(delta, elapsed);
     }
-
-    this.renderActiveScene(activeScene);
-
-    this.performance.frameEnd();
+    for (const hook of this.frameHooks) hook(delta, elapsed);
 
     // Flush input at end of frame so justPressed is available during update
     this.input.update();
-  };
+  }
+
+  /** Render the active scene, or hand off to the render override (the editor's viewport). */
+  render(delta: number): void {
+    if (this.renderOverride) this.renderOverride(delta);
+    else this.renderActiveScene(this.scenes.active);
+    this.performance.frameEnd();
+  }
 
   private updateFpsCounter(): void {
     this.fpsCounter.frames++;
@@ -385,14 +367,12 @@ export class Engine {
     if (!this.fog) {
       this.fog = new FogSystem(activeScene, this.camera, this.renderer);
       this.trails = new TrailManager(activeScene);
-      this.splines = new SplineManager(activeScene);
     }
   }
 
   private updateRuntimeSystems(delta: number): void {
     this.cinematics.update(delta);
     this.particles.update(delta);
-    this.network.update(delta);
     this.tweens.update(delta);
     this.timers.update(delta);
     this.dialogue.update(delta);
@@ -415,7 +395,6 @@ export class Engine {
     this.statusEffects.update(delta);
     if (this.fog) this.fog.update(delta);
     if (this.trails) this.trails.update(delta, this.camera);
-    if (this.splines) this.splines.update(delta);
     if (this.minimap) this.minimap.update(delta);
     if (this.damagePopups) this.damagePopups.update(delta);
   }
@@ -423,17 +402,12 @@ export class Engine {
   private updateAlwaysOnSystems(delta: number): void {
     this.lod.update();
     this.billboards.update(delta, this.camera);
-    this.profiler.frameEnd();
     this.debugOverlay.update(delta, this.renderer);
     if (this.debugDraw) this.debugDraw.update(delta);
   }
 
   private renderActiveScene(scene: THREE.Scene | null): void {
     if (!scene) return;
-
-    if (this.culling.enableFrustumCulling) {
-      this.culling.cull(scene, this.camera);
-    }
 
     this.optimizeFrame(scene);
 
@@ -508,12 +482,8 @@ export class Engine {
   }
 
   private onResize(): void {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
-    this.postProcessing.resize(w, h);
+    if (!this.autoResize) return;
+    this.setViewportSize(window.innerWidth, window.innerHeight);
   }
 
   dispose(): void {
@@ -529,7 +499,6 @@ export class Engine {
     this.input.dispose();
     this.assets.dispose();
     this.particles.dispose();
-    this.network.disconnect();
     this.postProcessing.dispose();
     this.audio.dispose();
     this.ui.dispose();
@@ -541,9 +510,6 @@ export class Engine {
     this.cameraEffects.dispose();
     this.pools.dispose();
     this.weather.dispose();
-    this.profiler.dispose();
-    this.workers.dispose();
-    this.hotReload.dispose();
   }
 
   private disposeRenderingSystems(): void {
@@ -551,7 +517,6 @@ export class Engine {
     this.billboards.dispose();
     this.decals.dispose();
     this.instancing.dispose();
-    this.lightProbes.dispose();
     this.performance.dispose();
     this.renderStats.dispose();
   }
@@ -564,7 +529,6 @@ export class Engine {
     if (this.sky) this.sky.dispose();
     if (this.fog) this.fog.dispose();
     if (this.trails) this.trails.dispose();
-    if (this.splines) this.splines.dispose();
   }
 
   /** Create a minimap overlay — only call this if your game needs one */

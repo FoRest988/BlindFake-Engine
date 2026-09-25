@@ -8,6 +8,9 @@ export abstract class System {
   /** Lower priority runs first */
   public priority = 0;
 
+  /** Systems that must keep running while the editor is in 'edit' mode (e.g. transform sync). */
+  public runsInEditMode = false;
+
   /**
    * Component types this system only reads.
    * Used by the World execution graph to detect safe-to-parallelise groups.
@@ -20,14 +23,6 @@ export abstract class System {
    * Any two systems that share a write target are serialised.
    */
   public readonly writeComponents: ComponentClass[] = [];
-
-  /**
-   * Maximum milliseconds this system may consume in a single frame.
-   * When > 0 and exceeded, the system is skipped for the remainder of
-   * the current frame and will run again next frame.
-   * Set to 0 (default) to disable the budget.
-   */
-  public tickBudgetMs = 0;
 
   abstract update(delta: number, elapsed: number): void;
 

@@ -255,6 +255,7 @@ export class ScriptingRuntime {
       `;
 
       // Use Function constructor (sandboxed — no access to globals except what we pass)
+      // eslint-disable-next-line no-new-func -- not actually sandboxed; replaced by LuaHost in rework F4
       const factory = new Function(wrapped);
       const exports = factory();
 

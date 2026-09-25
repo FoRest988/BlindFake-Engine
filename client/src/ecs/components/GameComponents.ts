@@ -46,6 +46,12 @@ export class MeshComponent extends Component {
       }
     });
   }
+
+  /** Detach the object from the scene when the entity goes away (no more ghost meshes). */
+  dispose(): void {
+    this.object3D.removeFromParent();
+    this.addedToScene = false;
+  }
 }
 
 /** Animation mixer for skeletal/morph animations */

@@ -1847,6 +1847,7 @@ export class VisualScriptEditor {
   private hoveredNode: string | null = null;
   private animFrameId = 0;
   private resizeObserver: ResizeObserver | null = null;
+  private _windowKeyDown: ((e: KeyboardEvent) => void) | null = null;
   private lastContextMenuPos = { x: 0, y: 0 };
 
   // Comment interaction
@@ -2191,7 +2192,11 @@ export class VisualScriptEditor {
     });
 
     // Keyboard
-    window.addEventListener('keydown', (e) => {
+    // Global shortcuts for the graph. They must not fire while another tab is on screen:
+    // body focus is the normal state everywhere, so also require this panel to be mounted.
+    if (this._windowKeyDown) window.removeEventListener('keydown', this._windowKeyDown);
+    this._windowKeyDown = (e: KeyboardEvent) => {
+      if (!this.container.isConnected) return;
       if (!this.container.contains(document.activeElement) && document.activeElement !== document.body) return;
       const isInput = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
       if (isInput) return;
@@ -2217,7 +2222,8 @@ export class VisualScriptEditor {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); this.redo(); this.updateInfo(toolbar); }
       if (e.key === 'm' || e.key === 'M') { this.showMinimap = !this.showMinimap; }
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); for (const n of this.graph.nodes) this.selectedNodes.add(n.id); }
-    });
+    };
+    window.addEventListener('keydown', this._windowKeyDown);
   }
 
   /* ─── Mouse Handlers ─────────────────────────────────── */
@@ -3583,6 +3589,10 @@ export class VisualScriptEditor {
 
   dispose(): void {
     cancelAnimationFrame(this.animFrameId);
+    if (this._windowKeyDown) {
+      window.removeEventListener('keydown', this._windowKeyDown);
+      this._windowKeyDown = null;
+    }
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this._debugRuntime?.stop();

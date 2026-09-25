@@ -1,5 +1,5 @@
 /**
- * ModelingRiggingPanel �?Full 3D modeling, sculpting, UV editing & rigging.
+ * ModelingRiggingPanel — Full 3D modeling, sculpting, UV editing & rigging.
  *
  * Features:
  * - Create primitives from scratch (Cube, Sphere, Cylinder, Plane, Torus, Cone, etc.)
@@ -253,7 +253,7 @@ export class ModelingRiggingPanel {
     this.orbit = new OrbitControls(this.camera, this.canvas);
     this.orbit.enableDamping = true;
     this.orbit.dampingFactor = 0.1;
-    // Middle-button orbits, right-button pans �?left-button reserved for editing
+    // Middle-button orbits, right-button pans — left-button reserved for editing
     this.orbit.mouseButtons = {
       LEFT: null as unknown as THREE.MOUSE,    // editing, not orbit
       MIDDLE: THREE.MOUSE.ROTATE,
@@ -492,9 +492,9 @@ export class ModelingRiggingPanel {
     this.camera.updateProjectionMatrix();
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // CREATE PRIMITIVES
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private createPrimitive(type: string): void {
     let geometry: THREE.BufferGeometry;
@@ -538,9 +538,9 @@ export class ModelingRiggingPanel {
     this.camera.position.copy(center).add(new THREE.Vector3(size * 1.2, size * 0.9, size * 1.2));
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // LOAD / IMPORT / EXPORT
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private loadFromScene(): void {
     const obj = this.editor.state.selectedObject;
@@ -642,9 +642,9 @@ export class ModelingRiggingPanel {
     URL.revokeObjectURL(blobUrl);
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // TEXTURE ASSIGNMENT
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private assignTexture(): void {
     const mesh = this.activeMesh;
@@ -673,9 +673,9 @@ export class ModelingRiggingPanel {
     input.click();
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // MESH OPERATIONS
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private subdivideMesh(): void {
     const mesh = this.activeMesh;
@@ -852,9 +852,9 @@ export class ModelingRiggingPanel {
     }
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // UV EDITING
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private autoBoxUV(): void {
     const mesh = this.activeMesh;
@@ -939,9 +939,9 @@ export class ModelingRiggingPanel {
     }
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // SCULPTING
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private applySculpt(): void {
     const mesh = this.activeMesh;
@@ -1014,9 +1014,9 @@ export class ModelingRiggingPanel {
     }
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // SELECTION
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private selectVertexAtClick(additive: boolean): void {
     const mesh = this.activeMesh;
@@ -1100,9 +1100,9 @@ export class ModelingRiggingPanel {
     this.updateOverlays();
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // DRAG (MOVE TOOL)
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private hasSelection(): boolean {
     if (this.editMode === 'vertex') return this.selectedVerts.size > 0;
@@ -1200,9 +1200,9 @@ export class ModelingRiggingPanel {
     this.updateOverlays();
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // EXTRUDE / INSET / LOOP CUT
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private extrudeSelectedFaces(): void {
     const mesh = this.activeMesh;
@@ -1275,7 +1275,7 @@ export class ModelingRiggingPanel {
     }
     for (const [key, faces] of edgeCount) {
       if (faces.length === 1) {
-        // Border edge �?create side quad (2 triangles)
+        // Border edge — create side quad (2 triangles)
         const [sa, sb] = key.split('_').map(Number);
         const na = oldToNew.get(sa)!, nb = oldToNew.get(sb)!;
         newIndices.push(sa, sb, nb, sa, nb, na);
@@ -1544,9 +1544,9 @@ export class ModelingRiggingPanel {
     }
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // OVERLAYS
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private updateOverlays(): void {
     if (this.wireframeOverlay) { this.scene.remove(this.wireframeOverlay); this.wireframeOverlay = null; }
@@ -1650,9 +1650,9 @@ export class ModelingRiggingPanel {
     }
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // UI UPDATES
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private updateInfo(): void {
     if (!this.infoEl) return;
@@ -1692,9 +1692,9 @@ export class ModelingRiggingPanel {
     ).join('');
   }
 
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
   // HELPERS
-  // ══════════════════════════════════════════════════════�?
+  // ══════════════════════════════════════════════════════— 
 
   private clearModel(): void {
     const toRemove: THREE.Object3D[] = [];

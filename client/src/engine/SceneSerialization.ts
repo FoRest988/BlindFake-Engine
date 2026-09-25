@@ -107,6 +107,9 @@ export class SceneSerializer {
     for (const child of scene.children) {
       // Skip editor helpers
       if (skipHelpers && (
+        child.userData.__editorHelper ||
+        child.userData.__ecsOwned ||
+        (child as { isTransformControls?: boolean }).isTransformControls ||
         child instanceof THREE.GridHelper ||
         child instanceof THREE.AxesHelper ||
         child instanceof THREE.BoxHelper ||

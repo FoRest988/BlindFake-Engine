@@ -4,6 +4,7 @@ import type { Engine } from '../../engine/Engine';
 
 export class RenderSystem extends System {
   public priority = 100; // Runs late
+  public override runsInEditMode = true;
   private engine: Engine;
 
   constructor(engine: Engine) {
@@ -22,6 +23,8 @@ export class RenderSystem extends System {
 
       // Add to scene if not already
       if (!mesh.addedToScene) {
+        // Owned by the ECS: recreated by gameplay code, never serialized or replaced by scene loads
+        mesh.object3D.userData.__ecsOwned = true;
         scene.add(mesh.object3D);
         mesh.addedToScene = true;
       }
@@ -29,7 +32,7 @@ export class RenderSystem extends System {
       // If the engine is in editor mode, read transforms FROM the 3D object
       // back into the ECS component (so gizmo changes are preserved).
       // Otherwise, push ECS → 3D as normal.
-      if (this.engine.editorActive) {
+      if (this.engine.mode === 'edit') {
         transform.position.copy(mesh.object3D.position);
         transform.quaternion.copy(mesh.object3D.quaternion);
         transform.scale.copy(mesh.object3D.scale);

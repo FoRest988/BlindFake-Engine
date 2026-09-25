@@ -12,12 +12,16 @@ export interface EditorAutosavePrefs {
 }
 
 export interface EditorAutosaveServiceDeps {
+  /** Autosaves are stored per project; without an id the legacy shared key is used. */
+  projectId?: string | null;
   getPreferences: () => EditorAutosavePrefs;
   getActiveScene: () => THREE.Scene | null | undefined;
   serializeScene: (scene: THREE.Scene) => SerializedScene;
-  deserializeScene: (data: SerializedScene, targetScene: THREE.Scene) => THREE.Scene;
-  rebuildHierarchy: () => void;
+  /** Replace the editable content of the active scene with the saved data (must not duplicate objects). */
+  restoreScene: (data: SerializedScene) => void;
   setStatusMessage: (message: string) => void;
+  /** Called with the serialized JSON after every successful autosave (e.g. to mirror it into the project record). */
+  onSaved?: (json: string) => void;
   storage?: StorageLike;
   confirmRestore?: (message: string) => boolean;
   now?: () => number;
@@ -30,9 +34,11 @@ export class EditorAutosaveService {
   private readonly getPreferences: () => EditorAutosavePrefs;
   private readonly getActiveScene: () => THREE.Scene | null | undefined;
   private readonly serializeScene: (scene: THREE.Scene) => SerializedScene;
-  private readonly deserializeScene: (data: SerializedScene, targetScene: THREE.Scene) => THREE.Scene;
-  private readonly rebuildHierarchy: () => void;
+  private readonly restoreScene: (data: SerializedScene) => void;
   private readonly setStatusMessage: (message: string) => void;
+  private readonly onSaved?: (json: string) => void;
+  private readonly dataKey: string;
+  private readonly timeKey: string;
   private readonly storage?: StorageLike;
   private readonly confirmRestore: (message: string) => boolean;
   private readonly now: () => number;
@@ -43,9 +49,12 @@ export class EditorAutosaveService {
     this.getPreferences = deps.getPreferences;
     this.getActiveScene = deps.getActiveScene;
     this.serializeScene = deps.serializeScene;
-    this.deserializeScene = deps.deserializeScene;
-    this.rebuildHierarchy = deps.rebuildHierarchy;
+    this.restoreScene = deps.restoreScene;
     this.setStatusMessage = deps.setStatusMessage;
+    this.onSaved = deps.onSaved;
+    const suffix = deps.projectId ? `:${deps.projectId}` : '';
+    this.dataKey = AUTOSAVE_KEY + suffix;
+    this.timeKey = AUTOSAVE_TIME_KEY + suffix;
     this.storage = deps.storage;
     this.confirmRestore = deps.confirmRestore ?? ((message) => confirm(message));
     this.now = deps.now ?? (() => Date.now());
@@ -71,10 +80,11 @@ export class EditorAutosaveService {
     const json = JSON.stringify(this.serializeScene(activeScene));
     try {
       const now = this.now();
-      this.storage.setItem(AUTOSAVE_KEY, json);
-      this.storage.setItem(AUTOSAVE_TIME_KEY, String(now));
+      this.storage.setItem(this.dataKey, json);
+      this.storage.setItem(this.timeKey, String(now));
       this.lastAutosave = now;
       this.setStatusMessage('Autosaved');
+      this.onSaved?.(json);
     } catch {
       // Ignore full or unavailable storage.
     }
@@ -82,8 +92,8 @@ export class EditorAutosaveService {
 
   offerRestore(): void {
     if (!this.storage) return;
-    const saved = this.storage.getItem(AUTOSAVE_KEY);
-    const timeStr = this.storage.getItem(AUTOSAVE_TIME_KEY);
+    const saved = this.storage.getItem(this.dataKey);
+    const timeStr = this.storage.getItem(this.timeKey);
     if (!saved || !timeStr) return;
 
     const age = this.now() - Number(timeStr);
@@ -94,10 +104,8 @@ export class EditorAutosaveService {
     if (!this.confirmRestore(`Autosave found from ${label} ago. Restore it?`)) return;
 
     try {
-      const activeScene = this.getActiveScene();
-      if (!activeScene) return;
-      this.deserializeScene(JSON.parse(saved) as SerializedScene, activeScene);
-      this.rebuildHierarchy();
+      if (!this.getActiveScene()) return;
+      this.restoreScene(JSON.parse(saved) as SerializedScene);
       this.setStatusMessage('Autosave restored');
     } catch {
       this.setStatusMessage('Failed to restore autosave');

@@ -181,7 +181,7 @@ export class EditorToolbar {
       if (this.editor.playMode.isPlaying()) {
         this.editor.playMode.togglePlayPause();
         this.editor.state.isPlaying = false;
-        this.editor.engine.editorActive = true; // Pause game systems
+        this.editor.engine.setMode('edit'); // Pause game systems
         this.refresh();
       }
     });

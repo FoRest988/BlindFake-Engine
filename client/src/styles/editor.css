@@ -41,7 +41,7 @@
 
 /* --- Reset for editor mode --- */
 .editor-mode #game-container { display: none; }
-.editor-mode #ui-overlay { display: none; }
+.bf-mode-edit #ui-overlay { display: none; } /* game HUD is visible only while playing */
 .editor-mode #cinematic-overlay { display: none; }
 
 /* --- Editor Root --- */

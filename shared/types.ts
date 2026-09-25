@@ -45,6 +45,9 @@ export enum MessageType {
   // World
   WORLD_STATE = 'world_state',
   LEVEL_LOAD = 'level_load',
+
+  // Errors (server -> client)
+  ERROR = 'error',
 }
 
 export interface NetworkMessage {
@@ -129,6 +132,24 @@ export interface RoomUpdatePayload {
 
 export interface RoomListPayload {
   rooms: RoomInfo[];
+}
+
+export type ErrorCode =
+  | 'version_mismatch'
+  | 'bad_payload'
+  | 'already_handshaken'
+  | 'not_handshaken'
+  | 'room_not_found'
+  | 'room_full'
+  | 'rate_limited';
+
+export interface ErrorPayload {
+  code: ErrorCode;
+  message: string;
+}
+
+export interface PingPayload {
+  time: number;
 }
 
 export interface WorldStatePayload {
