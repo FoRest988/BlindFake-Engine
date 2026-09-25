@@ -10,7 +10,7 @@ import { PhysicsSystem } from '../ecs/systems/PhysicsSystem';
 import { AnimationSystem } from '../ecs/systems/AnimationSystem';
 import { AISystem } from '../ecs/systems/AISystem';
 import { CharacterControllerSystem } from '../ecs/systems/CharacterControllerSystem';
-import { RapierPhysicsEngine } from './RapierPhysics';
+import { RapierPhysicsEngine } from '../modules/physics/RapierPhysics';
 import { MaterialLibrary } from './MaterialLibrary';
 import { MAX_FRAME_DT } from './loop/GameLoop';
 

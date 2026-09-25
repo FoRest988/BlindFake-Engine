@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { System } from '../System';
 import { TransformComponent, PhysicsBodyComponent, MeshComponent } from '../components/GameComponents';
-import { RapierPhysicsEngine, BodyDescriptor } from '../../engine/RapierPhysics';
+import { RapierPhysicsEngine, BodyDescriptor } from '../../modules/physics/RapierPhysics';
 import type { Entity } from '../Entity';
 import { FIXED_DT, GameLoop } from '../../engine/loop/GameLoop';
 
