@@ -1,7 +1,7 @@
 {
   "name": "blindfake",
   "version": "0.2.0-phantom",
-  "description": "BlindFake: Phantom — Professional 3D/2D Web Game Engine with Cinematic Editor, Animation Tools, and Multiplayer",
+  "description": "BlindFake: Phantom \u2014 Professional 3D/2D Web Game Engine with Cinematic Editor, Animation Tools, and Multiplayer",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,7 +23,8 @@
     "metrics": "node scripts/metrics.mjs",
     "check-encoding": "node scripts/check-encoding.mjs",
     "knip": "knip",
-    "check": "npm run typecheck && npm run typecheck:test && npm run typecheck:server && npm run lint && npm run test:coverage && npm run build && npm run build:server"
+    "check": "npm run typecheck && npm run typecheck:test && npm run typecheck:server && npm run lint && npm run check-readme-claims && npm run test:coverage && npm run build && npm run build:server",
+    "check-readme-claims": "node scripts/check-readme-claims.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.3",

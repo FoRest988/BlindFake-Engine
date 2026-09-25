@@ -97,35 +97,6 @@ describe('ProjectTemplates', () => {
     expect(scene.getObjectByName('EnergyCrystal_0')?.userData.__luaScript).toContain('Energy Crystal');
   });
 
-  it('populates the FPS template with attached scripts on key gameplay objects', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'fps');
-
-    expect(result.updateFn).toBeTypeOf('function');
-    expect(scene.getObjectByName('HealStation')?.userData.__luaScript).toContain('Heal Station');
-    expect(scene.getObjectByName('AmmoCrate')?.userData.__luaScript).toContain('Ammo Crate');
-    expect(scene.getObjectByName('ExtractionTerminal')?.userData.__luaScript).toContain('Extraction Terminal');
-    expect(scene.getObjectByName('HazardDrone_0')?.userData.__luaScript).toContain('Patrol Hazard Drone');
-    expect(scene.getObjectByName('TargetDummy_0')?.userData.__luaScript).toContain('Armored Target Dummy');
-  });
-
-  it('moves forward in the FPS template when W is pressed', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'fps');
-    const startZ = engine.camera.position.z;
-
-    engine.editorActive = false;
-    engine.input.isKeyDown = vi.fn((key: string) => key === 'w');
-    result.updateFn?.(0.1, 0);
-
-    // Initial yaw = Math.PI so camera faces +Z (toward arena). W adds forward=(0,0,+1).
-    expect(engine.camera.position.z).toBeGreaterThan(startZ);
-  });
-
   it('configures the platformer3d template with a kinematic character controller and pointer lock camera capture', () => {
     const engine = createEngineStub();
     const scene = new THREE.Scene();
@@ -178,75 +149,4 @@ describe('ProjectTemplates', () => {
     expect(transform?.position.toArray()).toEqual([0, 4, 0]);
   });
 
-  it('populates the topdown2d template with attached scripts on mission-critical objects', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'topdown2d');
-
-    expect(result.updateFn).toBeTypeOf('function');
-    expect(scene.getObjectByName('Courier')?.userData.__luaScript).toContain('Courier Controller');
-    expect(scene.getObjectByName('CommandRelay')?.userData.__luaScript).toContain('Command Relay');
-    expect(scene.getObjectByName('ExtractionPad')?.userData.__luaScript).toContain('Extraction Pad');
-    expect(scene.getObjectByName('PatrolDrone_0')?.userData.__luaScript).toContain('Patrol Drone');
-    expect(scene.getObjectByName('DataShard_0')?.userData.__luaScript).toContain('Data Shard');
-  });
-
-  it('populates the mainmenu template with attached scripts on key presentation objects', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'mainmenu');
-
-    expect(result.updateFn).toBeTypeOf('function');
-    expect(scene.getObjectByName('MenuCameraRig')?.userData.__luaScript).toContain('Menu Camera Rig');
-    expect(scene.getObjectByName('MenuPortal')?.userData.__luaScript).toContain('Menu Portal');
-    expect(scene.getObjectByName('TitleMonolith')?.userData.__luaScript).toContain('Title Monolith');
-    expect(scene.getObjectByName('PLAY_Pedestal')?.userData.__luaScript).toContain('Menu Pedestal');
-  });
-
-  it('populates the fighting template with fighter meshes and arena objects', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'fighting');
-
-    expect(result.updateFn).toBeTypeOf('function');
-    expect(scene.getObjectByName('Fighter_P1')?.userData.__luaScript).toContain('Fighter');
-    expect(scene.getObjectByName('Fighter_P2')?.userData.__luaScript).toContain('Fighter');
-    expect(scene.getObjectByName('ArenaFloor')).toBeDefined();
-    expect(scene.getObjectByName('Stand_P1')).toBeDefined();
-    expect(scene.getObjectByName('Stand_P2')).toBeDefined();
-  });
-
-  it('populates the racing template with checkpoints, cars, and boost pads', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'racing');
-
-    expect(result.updateFn).toBeTypeOf('function');
-    expect(scene.getObjectByName('Checkpoint_0')?.userData.__luaScript).toContain('Checkpoint');
-    expect(scene.getObjectByName('Car_Player')?.userData.__luaScript).toContain('Player Car');
-    expect(scene.getObjectByName('AICar_0')?.userData.__luaScript).toContain('AI Racer');
-    expect(scene.getObjectByName('BoostPad_0')?.userData.__luaScript).toContain('Boost Pad');
-    expect(scene.getObjectByName('StartLine')?.userData.__luaScript).toContain('Start');
-    expect(scene.getObjectByName('PitStop')?.userData.__luaScript).toContain('Pit Stop');
-  });
-
-  it('populates the puzzle template with interactive puzzle objects and a player', () => {
-    const engine = createEngineStub();
-    const scene = new THREE.Scene();
-
-    const result = applyTemplate(engine, scene, 'puzzle');
-
-    expect(result.updateFn).toBeTypeOf('function');
-    expect(scene.getObjectByName('PressurePlate_0')?.userData.__luaScript).toContain('Pressure Plate');
-    expect(scene.getObjectByName('PuzzleDoor_0')?.userData.__luaScript).toContain('Puzzle Door');
-    expect(scene.getObjectByName('KeyPickup_0')?.userData.__luaScript).toContain('Key Pickup');
-    expect(scene.getObjectByName('LockMechanism_0')?.userData.__luaScript).toContain('Lock Mechanism');
-    expect(scene.getObjectByName('MovingPlatform_0')?.userData.__luaScript).toContain('Moving Platform');
-    expect(scene.getObjectByName('ExitPortal')?.userData.__luaScript).toContain('Exit Portal');
-    expect(scene.getObjectByName('HintScroll_0')?.userData.__luaScript).toContain('Hint Scroll');
-  });
 });

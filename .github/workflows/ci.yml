@@ -28,10 +28,10 @@ jobs:
       - run: npm run typecheck:test
       - run: npm run typecheck:server
       - run: npm run lint
+      - run: npm run check-readme-claims
       - run: npm run check-encoding
         continue-on-error: true # blocking from F2 (mojibake is fixed there)
       - run: npm run knip
-        continue-on-error: true # blocking from F1 (dead modules are removed there)
       - run: npm run test:coverage
       - run: npm run build
       - run: npm run build:server

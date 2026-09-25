@@ -41,6 +41,30 @@ Outros números da F0 que não saem do script:
 | `npx knip` (arquivos sem uso) | 22 |
 | contextos WebGL na aba Scene (e2e) | ≤ 8 (limite provisório do smoke) |
 
+## Após a F1 (corte agressivo)
+
+| métrica | baseline | após F1 |
+|---|---|---|
+| productLines | 73.362 | 52.361 |
+| productFiles | 157 | 107 |
+| deadModules | 19 | 0 |
+| testOnlyModules | 10 | 1 (`NetworkManager`, volta ao app na F9) |
+| itBlocks | 332 | 144 (todos sobre código que o app usa) |
+| weakAssertions | 72 | 27 |
+| innerHtmlAssignments | 225 | 183 |
+| cssTextAssignments | 567 | 445 |
+| nativeDialogs | 32 | 21 |
+| addEventListener / removeEventListener | 679 / 72 | 569 / 63 |
+| styleInjections | 13 | 8 |
+| editorReachIns | 335 | 313 |
+| webglRenderers | 15 | 7 |
+| cdnReferences | 12 | 4 |
+| eagerSystemsInEngineCtor | 39 | 32 |
+| editorActiveUses | 20 | 13 |
+| `npx knip` (arquivos sem uso) | 22 | 0 (gate bloqueante no CI) |
+| `check-encoding` | 15 arquivos | 2 (`LuaScriptRunner.ts`, `ModelingRiggingPanel.ts`; F2) |
+| templates | 9 | 3 |
+
 ## Metas
 
 | métrica | F1 | F2 | F3 | F4 | F5 | F7 | F9 |

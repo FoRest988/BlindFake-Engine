@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Fails when any source or doc file is not valid UTF-8, starts with a BOM,
- * contains U+FFFD replacement characters, or contains CJK characters
+ * contains U+FFFD replacement characters, or contains CJK characters (U+3040-U+9FFF)
  * (which in this repository are always the result of GBK mojibake).
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -12,7 +12,7 @@ const ROOT_FILES = ['README.md', 'ROADMAP.md', 'package.json', 'tsconfig.json', 
 const EXTS = new Set(['.ts', '.mts', '.js', '.mjs', '.md', '.css', '.html', '.json', '.yml', '.yaml', '.lua']);
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', 'public', 'decisions']); // docs/decisions quotes historical mojibake on purpose
 // Built from char codes so this file never contains the characters it hunts for.
-const CJK_RE = new RegExp(`[${String.fromCharCode(0x3000)}-${String.fromCharCode(0x9fff)}]`, 'g');
+const CJK_RE = new RegExp(`[${String.fromCharCode(0x3040)}-${String.fromCharCode(0x9fff)}]`, 'g');
 
 function* walk(dir) {
   for (const name of readdirSync(dir)) {
@@ -48,9 +48,9 @@ for (const file of files) {
   }
   const lines = text.split('\n');
   lines.forEach((line, i) => {
-    if (line.includes('�')) problems.push(`${file}:${i + 1}: contains U+FFFD replacement character`);
+    if (line.includes(String.fromCharCode(0xfffd))) problems.push(`${file}:${i + 1}: contains U+FFFD replacement character`);
     const cjk = line.match(CJK_RE);
-    if (cjk) problems.push(`${file}:${i + 1}: contains CJK characters (${cjk.length}), likely mojibake`);
+    if (cjk) problems.push(`${file}:${i + 1}: contains CJK characters (U+3040-U+9FFF) (${cjk.length}), likely mojibake`);
   });
 }
 

@@ -8,7 +8,7 @@ import { test, expect, type Page } from '@playwright/test';
  * and is tightened phase by phase (see docs/decisions/0000-rework-plan.md).
  */
 
-const TEMPLATES = ['3d', '2d', 'platformer3d', 'fps', 'topdown2d', 'mainmenu', 'fighting', 'racing', 'puzzle'] as const;
+const TEMPLATES = ['3d', '2d', 'platformer3d'] as const;
 const TABS = ['scene', 'terrain', 'animation', 'cinematic', 'statemachine', 'scripting', 'blueprints', 'ui', 'modeling', 'textures'] as const;
 const MAX_WEBGL_CONTEXTS = 8;
 
